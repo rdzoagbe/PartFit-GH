@@ -6,6 +6,8 @@
   P.register('vehicle',()=>P.v2.vehicle());
   P.register('order',()=>{
     P.v2.cart();
+    document.querySelector('main.page')?.insertAdjacentHTML('afterbegin','<div class="v4CheckoutSteps"><div class="active"><b>1 · Submit</b><small>No payment</small></div><div><b>2 · Approval</b><small>Fitment + final price</small></div><div><b>3 · Collect & pay</b><small>Spintex</small></div></div>');
+    const total=document.querySelector('.sum.total span:first-child');if(total)total.textContent='Provisional basket total';
     const f=document.querySelector('.form'),p=P.profile();
     if(f&&P.signed()){
       for(const [id,val] of [['name',p.name],['phone',p.phone],['email',p.email]]){const el=document.getElementById(id);if(el&&!el.value)el.value=val||''}
