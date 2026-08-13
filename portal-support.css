@@ -1,0 +1,1 @@
+.faqItem{margin:8px 0;border:1px solid var(--ln);border-radius:12px;background:#fff}.faqItem>button{width:100%;padding:12px;border:0;background:#fff;text-align:left}.faqAnswer{display:none;padding:12px;color:var(--mu)}.faqItem.open .faqAnswer{display:block}.policyBody{padding:16px}.draftBadge{display:inline-block;padding:6px 9px;border-radius:99px;background:#fff1c7}
