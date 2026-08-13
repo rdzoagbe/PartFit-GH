@@ -1,34 +1,68 @@
-# PartFit Ghana — Backend Migration Plan
+# PartFit Ghana — Production Backend Procedure
 
-## Recommended first production backend
+The GitHub Pages build is intentionally safe for demonstration: customer orders, My Garage and approval simulation remain local to the browser. Real customer data must move to Supabase before commercial launch.
 
-Use Supabase Auth + Postgres + Row Level Security. Keep the current static/PWA storefront, but replace browser-local account/order state with authenticated database calls.
+## 1. Create the Supabase project
 
-## Migration order
+Create a Supabase project, choose the nearest suitable region, enable email authentication, and keep email confirmation enabled for production. In Auth URL Configuration set the Site URL to the final PartFit HTTPS domain and add only the exact GitHub Pages URL while testing.
 
-1. Create a Supabase project in the Ghana/West-Africa-appropriate nearest available region.
-2. Run `backend/supabase-schema.sql` and review policies before adding users.
-3. Configure customer authentication (email/password or OTP) and verified phone/email recovery.
-4. Replace `pfProfileV3`, `pfOrdersV3` and staff/local status writes with database reads/writes.
-5. Keep only harmless UX preferences such as selected vehicle/category in localStorage.
-6. Create a separate staff application or protected `/admin` build. Do not load staff controls in the public customer bundle.
-7. Staff approval writes the confirmed price and order status server-side, then creates an `order_events` audit record.
-8. Send customer WhatsApp/email notifications from an approved server-side integration; do not put privileged messaging credentials in browser JavaScript.
-9. Add rate limiting, monitoring, backups and an error-reporting service.
-10. Put the final site behind a custom domain/CDN where production HTTP security headers can be configured.
+## 2. Run the SQL in this exact order
 
-## Customer flow
+1. `backend/supabase-schema.sql`
+2. `backend/v5-products.sql`
+3. `backend/v5-rpc.sql`
+4. `backend/v5-indexes.sql`
+5. `backend/v5-grants.sql`
 
-`catalogue -> submit order -> reviewing -> approved + confirmed price -> ready for collection -> pay at pickup -> collected`
+Review every statement in the Supabase SQL editor before executing it.
 
-The catalogue price is provisional until approval. A customer never writes the confirmed total or staff-controlled status.
+## 3. Create the first staff user
 
-## Admin flow
+Create the staff account through Supabase Auth, copy that user's UUID, then insert it manually in the SQL editor:
 
-`new requests -> fitment/stock review -> adjust approved lines/price -> approve -> notify -> prepare -> ready -> collect/payment recorded`
+```sql
+insert into public.staff_roles(user_id,role)
+values ('USER_UUID_HERE','admin');
+```
 
-Every status or price change must be attributable to an authenticated staff account.
+Never expose a service-role key in the browser.
 
-## Environment variables
+## 4. Browser configuration
 
-Public browser configuration may contain only the project's public URL/anonymous client key. Any service-role key, privileged messaging token or admin secret must live only in a protected server/runtime environment and must never be committed to this repository.
+Only the public project URL and anonymous/publishable client key may be placed in browser configuration. The repository already includes `v5-config.js` and a Supabase adapter blueprint. Service-role keys, WhatsApp Business API secrets and privileged admin tokens belong only in protected server/runtime configuration.
+
+## 5. Order security model
+
+The browser submits only product IDs and quantities. `submit_order()` looks up current price and stock on the server, creates the public order reference and stores the provisional total in one database transaction. The customer cannot write an approved price.
+
+Staff uses `staff_set_order_status()` to move an order through:
+
+`submitted -> reviewing -> approved -> ready_for_collection -> collected`
+
+At approval, the server stores the confirmed amount and a reservation expiry. Every status change creates an audit event.
+
+## 6. Pay-on-pickup rules
+
+- No payment at submission.
+- No payment while fitment/stock are under review.
+- Staff approves the exact fitment and final price.
+- The approved amount is shown to the customer.
+- Customer pays when collecting at Spintex.
+- Recommended reservation window: 48 hours after approval.
+- Uncollected reservations can be marked expired and returned to available stock.
+
+## 7. Production checks before real customers
+
+- Test customer A cannot read customer B's orders.
+- Test customers cannot update status or confirmed totals.
+- Test an unauthenticated browser cannot read profiles/orders.
+- Test only staff accounts can read the staff queue.
+- Test invalid order-state transitions are rejected.
+- Test inactive/out-of-stock products cannot be submitted.
+- Test all authentication redirect URLs are HTTPS and allow-listed.
+- Configure backups, error monitoring, rate limiting and auth attack protection.
+- Put the final site behind hosting/CDN controls that can set response security headers.
+
+## 8. Current test procedure
+
+On GitHub Pages, use **My PartFit -> Continue as Demo Customer**. Submit an order, open its tracking page, then use the visible **End-to-end test controls** to simulate Review, Approval, Ready and Collected. Those controls exist only for local testing and do not represent the production staff security boundary.
