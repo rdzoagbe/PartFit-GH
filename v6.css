@@ -424,6 +424,18 @@ h1,h2,h3{letter-spacing:-.02em}
    order → orders/track, reusing the existing markup classes.
    ========================================================================== */
 
+/* --- back button (portal-nav.js) --- */
+.v6Back{width:38px;height:38px;border-radius:11px;border:1px solid var(--ln);background:var(--surface);
+  color:var(--n);display:grid;place-items:center;cursor:pointer;box-shadow:var(--sh-sm);flex:none;margin-right:2px;
+  transition:transform .12s,background .12s}
+.v6Back:active{transform:scale(.9)}
+.v6Back:hover{background:var(--surface-2)}
+
+/* --- product fit box actions --- */
+.fitBox .fitPickCar{margin-top:10px;min-height:40px;padding:0 16px;font-size:12.5px;border-radius:11px}
+.fitBox .fitChangeCar{display:inline-block;margin-top:8px;border:0;background:none;color:var(--n3);
+  font-weight:800;font-size:11.5px;cursor:pointer;padding:2px 0;text-decoration:underline;text-underline-offset:2px}
+
 /* --- monospace for the numbers/refs (the signature) --- */
 .eyebrow,.price,.detailPrice,.stock,.detailNo,.specGrid b,
 .orderRef,.v3OrderFoot b,.v3ApprovalAmount b,.cartItem strong,.sum b,
