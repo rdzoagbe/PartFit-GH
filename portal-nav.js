@@ -13,7 +13,7 @@
   const PARENT = {
     product: 'catalogue', vehicle: 'home', order: 'catalogue', track: 'orders',
     login: 'home', signup: 'home', faq: 'home', contact: 'home',
-    privacy: 'home', terms: 'home', returns: 'home', delivery: 'home', fitment: 'home'
+    privacy: 'home', terms: 'home', returns: 'home', delivery: 'home', fitment: 'home', staff: 'account'
   };
   P.cur = 'home';
 

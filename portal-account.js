@@ -68,7 +68,7 @@
   function orderRow(o) { return `<div class="pfRow"><div class="ico">📦</div><div class="mid"><b>${P.esc(o.id)}</b><small>${P.fmt(o.createdAt)} · ${P.esc(P.steps[o.stage] || P.steps[0])}</small></div><div class="amt">${money(Number(o.total || 0))}</div><button class="go" data-v3-track="${P.esc(o.id)}">Track</button></div>`; }
   function carRow(c, i) { return `<div class="pfRow"><div class="ico">🚗</div><div class="mid"><b>${P.esc(c.make + ' ' + c.model)}</b><small>${P.esc([c.year, c.engine].filter(Boolean).join(' · '))}</small></div><button class="go" data-garage-use="${i}">Shop</button><button class="rm" data-garage-remove="${i}" aria-label="Remove vehicle">×</button></div>`; }
 
-  function renderDash(p, orders, cars, demoMode) {
+  function renderDash(p, orders, cars, demoMode, staffRole) {
     const loading = orders === 'loading';
     const err = orders && orders.error;
     const list = Array.isArray(orders) ? orders : [];
@@ -106,6 +106,8 @@
         </section>
       </div>
 
+      ${staffRole ? `<button class="btn dark full" data-page="staff" style="margin-top:2px">🛠 Staff console <span style="opacity:.7;font-weight:700;font-size:11px">· ${P.esc(staffRole)}</span></button>` : ''}
+
       <div class="pfQuick">
         <button data-page="catalogue"><span>▦</span>Browse parts</button>
         <button data-page="request"><span>⌕</span>Request a part</button>
@@ -122,8 +124,9 @@
       renderDash(p, 'loading', 'loading', demoMode);
       Promise.all([
         window.PFSB.listOrders().then(a => a.map(window.PFSB.normOrder)).catch(e => ({ error: e.message || 'Could not load orders' })),
-        window.PFSB.listVehicles().then(a => a.map(v => ({ id: v.id, make: v.make, model: v.model, year: v.model_year, engine: v.engine }))).catch(() => [])
-      ]).then(([orders, cars]) => { if (document.querySelector('.pfDashHero')) renderDash(p, orders, cars, demoMode); });
+        window.PFSB.listVehicles().then(a => a.map(v => ({ id: v.id, make: v.make, model: v.model, year: v.model_year, engine: v.engine }))).catch(() => []),
+        window.PFSB.isStaff().catch(() => null)
+      ]).then(([orders, cars, staffRole]) => { if (document.querySelector('.pfDashHero')) renderDash(p, orders, cars, demoMode, staffRole); });
       return;
     }
     renderDash(p, P.userOrders(), P.cars(), demoMode);

@@ -542,3 +542,39 @@ h1,h2,h3{letter-spacing:-.02em}
 .prototypeControl{border-radius:14px;background:var(--surface-2);border:1px dashed var(--ln);padding:13px 14px}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ==========================================================================
+   STAFF CONSOLE (portal-staff.js)
+   ========================================================================== */
+.pfStaffTabs{display:flex;gap:8px;overflow-x:auto;margin:14px 0;padding-bottom:2px;scrollbar-width:none}
+.pfStaffTabs::-webkit-scrollbar{display:none}
+.pfStaffCard{padding:15px;margin-bottom:12px}
+.pfSHead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.pfSHead>div:first-child{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pfSStatus{font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.01em}
+.pfSStatus.new{background:color-mix(in srgb,var(--n3) 14%,transparent);color:var(--n3)}
+.pfSStatus.rev{background:var(--fit-con-bg);color:var(--fit-con-ink)}
+.pfSStatus.app{background:var(--fit-cat-bg);color:var(--fit-cat-ink)}
+.pfSStatus.rdy{background:color-mix(in srgb,var(--n) 12%,transparent);color:var(--n)}
+.pfSStatus.done{background:var(--fit-non-bg);color:var(--fit-non-ink)}
+.pfSStatus.bad{background:#fdeaec;color:#b0121d}
+.pfSDate{font-size:10.5px;color:var(--mu2)}
+.pfSVeh{margin:9px 0 10px;font-size:12.5px;color:var(--mu);font-weight:600}
+.pfSItems{display:flex;flex-direction:column;gap:6px;padding:11px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--ln)}
+.pfSItem{display:flex;justify-content:space-between;gap:10px;font-size:12.5px}
+.pfSMuted{color:var(--mu2);font-size:12px}
+.pfSFoot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.pfSAmt small{display:block;font-size:9.5px;color:var(--mu2);text-transform:uppercase;letter-spacing:.05em}
+.pfSAmt b{font-size:18px;color:var(--n)}
+.pfStaffActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pfStaffActions .btn{min-height:40px;padding:0 14px;font-size:12.5px}
+.pfStaffTerminal{font-size:11px;color:var(--mu2);font-weight:700}
+.btn.danger{background:var(--surface);color:var(--r);border:1px solid color-mix(in srgb,var(--r) 35%,var(--ln))}
+.btn.ghostLine{background:var(--surface);color:var(--mu);border:1px solid var(--ln)}
+.pfApprove{margin-top:12px;padding:13px;border-radius:13px;background:var(--fit-con-bg);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.pfApproveRow{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.pfApprove label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:800;color:var(--fit-con-ink)}
+.pfApprove input{min-height:44px;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--ln));background:var(--surface);color:var(--ink);padding:0 11px;font:inherit;font-size:14px}
+.pfApprove input.pfApprovePrice{font-family:var(--fs-mono);font-weight:700}
+.pfApproveBtns{display:flex;gap:8px;margin-top:11px}
+@media(max-width:480px){.pfApproveRow{grid-template-columns:1fr}}

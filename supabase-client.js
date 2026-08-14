@@ -107,6 +107,19 @@
     rest('/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) + '&select=' + ORDER_COLS + '&limit=1')
       .then(a => (a && a[0]) || null);
 
+  /* ---------- Staff ---------- */
+  PFSB.isStaff = () =>
+    rest('/staff_roles?select=role&user_id=eq.' + encodeURIComponent((PFSB.user() || {}).id))
+      .then(a => (a && a[0]) ? a[0].role : null).catch(() => null);
+  PFSB.staffListOrders = status =>
+    rest('/orders?select=' + ORDER_COLS + (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+  PFSB.setOrderStatus = (ref, status, opts = {}) =>
+    rest('/rpc/staff_set_order_status', { method: 'POST', body: {
+      p_public_ref: ref, p_status: status,
+      p_confirmed_total: opts.confirmedTotal ?? null, p_note: opts.note ?? null,
+      p_reservation_hours: opts.reservationHours ?? 48
+    } });
+
   /* ---------- Vehicles (My Garage) ---------- */
   PFSB.listVehicles = () => rest('/vehicles?select=id,make,model,model_year,engine&order=created_at.desc');
   PFSB.addVehicle = v => rest('/vehicles', {
