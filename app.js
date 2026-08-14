@@ -57,7 +57,10 @@ function fitInfo(p){
 }
 
 function image(src, alt, extra=''){
-  return `<img src="${src}" alt="${safe(alt)}" loading="lazy" ${extra} onerror="this.classList.add('imgError');this.alt='Product image unavailable';">`;
+  // No inline onerror handler: the page CSP (script-src 'self') blocks inline
+  // event handlers, so the fallback is applied by a global listener in
+  // runtime-guard.js instead.
+  return `<img src="${src}" alt="${safe(alt)}" loading="lazy" ${extra}>`;
 }
 
 function fitPill(p){
@@ -158,7 +161,7 @@ function vehicle(){
       <div class="field"><label>Make</label><select id="make">${Object.keys(cars).map(x=>`<option ${S.vehicle?.make===x?'selected':''}>${x}</option>`).join('')}</select></div>
       <div class="field"><label>Model</label><select id="model"></select></div>
       <div class="grid2">
-        <div class="field"><label>Year</label><select id="year">${[2009,2010,2011,2012,2013,2014,2015,2016].map(x=>`<option ${String(S.vehicle?.year)===String(x)?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div class="field"><label>Year</label><select id="year">${Array.from({length:2026-2005+1},(_,i)=>2026-i).map(x=>`<option ${String(S.vehicle?.year)===String(x)?'selected':''}>${x}</option>`).join('')}</select></div>
         <div class="field"><label>Engine / variant <small>(recommended)</small></label><select id="engine">
           ${['Not sure','1.0 Petrol','1.2 Petrol','1.3 Petrol','1.4 Petrol','1.6 Petrol','1.8 Petrol','2.0 Petrol','Diesel / other'].map(x=>`<option ${S.vehicle?.engine===x?'selected':''}>${x}</option>`).join('')}
         </select></div>

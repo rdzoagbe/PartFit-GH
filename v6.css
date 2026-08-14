@@ -403,6 +403,12 @@ h1,h2,h3{letter-spacing:-.02em}
 .pfWelcome .wPerks div{background:rgba(9,22,40,.55);padding:12px 10px;text-align:center}
 .pfWelcome .wPerks b{display:block;font-size:11px}
 .pfWelcome .wPerks small{display:block;color:#a9c1da;font-size:9px;margin-top:2px}
+/* keep the landing a comfortable centred column on tablet/desktop */
+@media(min-width:560px){
+  .pfWelcome .wTop,.pfWelcome .wBody{width:100%;max-width:560px;margin-left:auto;margin-right:auto}
+  .pfWelcome .wPerks{width:100%;max-width:560px;margin-left:auto;margin-right:auto}
+  .pfWelcome h1{font-size:44px}
+}
 
 /* Guest gate on Orders */
 .pfLock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;margin-top:14px;padding:34px 22px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--ln);box-shadow:var(--sh)}
