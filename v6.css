@@ -37,6 +37,13 @@
   /* V4 aliases so older rules pick up the new language */
   --v4-blue:#0a1f3d; --v4-blue2:#12406f; --v4-red:#e01322;
   --v4-green:#12924b; --v4-soft:#f2f5f9; --v4-shadow:0 18px 46px rgba(10,31,61,.11);
+
+  /* concept language */
+  --fs-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --surface-2:#eef3f9;
+  --fit-cat-bg:#e7f7ed; --fit-cat-ink:#0e6f38;
+  --fit-con-bg:#fdf2d6; --fit-con-ink:#8a5d00;
+  --fit-non-bg:#eef2f7; --fit-non-ink:#586880;
 }
 
 /* ---------- Base ---------- */
@@ -404,5 +411,116 @@ h1,h2,h3{letter-spacing:-.02em}
 .pfLock p{margin:0 0 14px;color:var(--mu);font-size:12.5px;line-height:1.5;max-width:300px}
 .pfLock .btn{width:100%;max-width:290px}
 .pfLock .ln{border:0;background:none;color:var(--r);font-weight:800;font-size:13px;cursor:pointer;margin-top:2px}
+
+/* ==========================================================================
+   CONCEPT LANGUAGE PASS — monospace technical data + refined browsing/order
+   Brings the concept mockup's design language across catalogue → product →
+   order → orders/track, reusing the existing markup classes.
+   ========================================================================== */
+
+/* --- monospace for the numbers/refs (the signature) --- */
+.eyebrow,.price,.detailPrice,.stock,.detailNo,.specGrid b,
+.orderRef,.v3OrderFoot b,.v3ApprovalAmount b,.cartItem strong,.sum b,
+.total .price,.resultLine b{
+  font-family:var(--fs-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.eyebrow{text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--mu2)}
+.price{font-weight:700}
+.detailPrice{font-weight:700;font-size:27px}
+
+/* --- fitment pills: refined certainty system --- */
+.fitPill{gap:5px;padding:5px 10px;font-size:10px;font-weight:800;border-radius:99px;align-items:center}
+.fitPill.catalog{background:var(--fit-cat-bg);color:var(--fit-cat-ink)}
+.fitPill.check{background:var(--fit-con-bg);color:var(--fit-con-ink)}
+.fitPill.neutral{background:var(--fit-non-bg);color:var(--fit-non-ink)}
+
+/* --- product cards --- */
+.product{padding:11px;gap:12px;border-radius:var(--r-md);box-shadow:var(--sh-sm)}
+.product h3{font-size:14px;font-weight:750;letter-spacing:-.02em;line-height:1.24;margin:4px 0 7px}
+.productImg{border-radius:13px}
+.productMeta{gap:9px;margin-top:9px}
+.stock{color:var(--g)}
+.stock:not(.low){color:var(--g)}
+.catalogueGrid{gap:11px}
+
+/* --- catalogue tools --- */
+.catalogTools{gap:11px}
+.resultLine{margin:16px 2px 10px}
+.resultLine b{font-size:13px}
+.resultLine span{font-size:10px;color:var(--mu2)}
+.fitLegend{border-radius:14px;border:1px dashed var(--ln);background:var(--surface);padding:11px 13px;gap:8px}
+.fitLegend>b{font-size:10.5px;color:var(--mu)}
+.fitCallout{border-radius:14px}
+
+/* --- product detail --- */
+.detailVisual{background:radial-gradient(130% 120% at 30% 12%,#fff,color-mix(in srgb,var(--n3) 9%,var(--surface-2)))}
+.detail h1{font-size:23px;letter-spacing:-.03em;line-height:1.1;margin:8px 0 5px}
+.brandRow{font-family:var(--fs-mono);font-size:10px;letter-spacing:.03em}
+.detailNo{font-size:11px;color:var(--mu)}
+.fitBox{border-radius:16px;padding:14px;gap:12px;align-items:start}
+.fitBox.catalog{background:var(--fit-cat-bg);border:1px solid color-mix(in srgb,var(--g) 30%,transparent)}
+.fitBox.check{background:var(--fit-con-bg);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.fitBox.neutral{background:var(--fit-non-bg);border:1px solid var(--ln)}
+.fitIcon{width:42px;height:42px;border-radius:13px;background:var(--surface);font-size:19px;box-shadow:var(--sh-sm)}
+.fitBox b{font-size:13.5px;letter-spacing:-.01em}
+.specGrid{gap:9px}
+.specGrid>div{border-radius:13px;background:var(--surface-2);border:1px solid var(--ln);padding:11px 12px}
+.specGrid small{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu2)}
+.specGrid b{font-size:12.5px}
+.sourceBox{border-left:3px solid var(--n3);border-radius:0 12px 12px 0;background:var(--surface-2)}
+.sourceBox a{color:var(--n3)}
+.collectionMini{border-radius:13px;border:1px solid var(--ln)}
+.exactCheck{border-radius:15px}
+.stickyActions .btn{min-height:52px}
+
+/* --- order / cart --- */
+.v4CheckoutSteps{gap:8px;margin:2px 0 14px}
+.v4CheckoutSteps div{border-radius:13px;padding:11px;border:1px solid var(--ln);background:var(--surface);box-shadow:var(--sh-sm)}
+.v4CheckoutSteps b{font-size:11px}
+.v4CheckoutSteps .active{border-color:color-mix(in srgb,var(--g) 35%,var(--ln));background:var(--fit-cat-bg)}
+.orderList{border-radius:var(--r-lg)}
+.cartItem{padding:12px}
+.cartImg{border-radius:11px}
+.qty button{border-radius:9px;font-weight:800}
+.summary .total{font-size:17px}
+.total .price{font-size:19px}
+.v3PayNotice{border-radius:15px;background:var(--fit-cat-bg);border:1px solid color-mix(in srgb,var(--g) 28%,transparent);display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center}
+.v3PayNotice>span{width:34px;height:34px;border-radius:11px;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:900}
+.v3PayNotice b{font-size:13px}.v3PayNotice p{margin:2px 0 0;font-size:11px;color:var(--mu)}
+.v3OrderLogin{border-radius:13px}
+.location{border-radius:13px}.location.selected{background:var(--fit-cat-bg);border-color:color-mix(in srgb,var(--g) 35%,var(--ln))}
+
+/* --- orders list --- */
+.v3OrdersHero,.v3TrackHero,.lookupHero{border-radius:var(--r-lg);padding:20px;color:#fff;
+  background:radial-gradient(90% 120% at 100% 0,color-mix(in srgb,var(--n3) 55%,transparent),transparent 48%),linear-gradient(140deg,#08182c,#123258);
+  box-shadow:var(--sh)}
+.v3OrdersHero .sectionKicker,.v3TrackHero .sectionKicker,.lookupHero .sectionKicker{color:#ffd0d3}
+.v3OrdersHero h1,.v3TrackHero h1,.lookupHero h1{font-size:22px;letter-spacing:-.03em;margin:6px 0}
+.v3OrdersHero p,.lookupHero p{color:#cdddef;font-size:12px;margin:0}
+.v3OrderList{display:grid;gap:12px;margin-top:14px}
+.v3OrderCard{border-radius:var(--r-md);box-shadow:var(--sh-sm);padding:15px}
+.orderRef{font-size:11px;font-weight:700;color:var(--mu);letter-spacing:.02em}
+.v3OrderCard h2{font-size:15px;letter-spacing:-.01em;margin:4px 0 2px}
+.v3OrderItems span{background:var(--surface-2);border:1px solid var(--ln);font-size:9.5px;border-radius:99px;padding:5px 9px}
+.v3OrderFoot b{font-size:15px;color:var(--n)}
+.noOrders{border-radius:var(--r-lg);text-align:center;padding:34px 20px}
+
+/* --- track: pay-on-pickup rail --- */
+.v3Timeline{border-radius:var(--r-lg);padding:8px 16px 14px}
+.v3Step{grid-template-columns:34px 1fr;gap:12px;padding:10px 0;position:relative}
+.v3Step::before{content:"";position:absolute;left:16px;top:34px;bottom:-10px;width:2px;background:var(--ln)}
+.v3Step:last-child::before{display:none}
+.v3Step.done::before,.v3Step.current::before{background:var(--g)}
+.v3Step>span{width:34px;height:34px;border:2px solid var(--ln);background:var(--surface-2);color:var(--mu2);font-family:var(--fs-mono);font-weight:700;font-size:12px;z-index:1}
+.v3Step.done>span{background:var(--g);color:#fff;border-color:var(--g)}
+.v3Step.current>span{background:var(--r);color:#fff;border-color:var(--r);box-shadow:0 0 0 5px color-mix(in srgb,var(--r) 22%,transparent)}
+.v3Step b{font-size:13.5px;letter-spacing:-.01em}
+.v3Step small,.v3ApprovalAmount small,.v3TrackHero>div>small{display:block;margin-top:1px}
+.v3Step small{color:var(--mu);font-size:10.5px}
+.v3TrackHero>div>small{color:#cdddef;font-size:10px}
+.v3ApprovalAmount{border-radius:16px;padding:15px;border:1px solid color-mix(in srgb,var(--g) 30%,transparent);background:var(--fit-cat-bg)}
+.v3ApprovalAmount b{font-size:22px;color:var(--n)}
+.lookupCard{border-radius:var(--r-lg);padding:16px}
+.prototypeControl{border-radius:14px;background:var(--surface-2);border:1px dashed var(--ln);padding:13px 14px}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
