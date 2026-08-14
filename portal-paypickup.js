@@ -24,6 +24,38 @@
   P.cartEnhance=cartPayNotice;
   const SB=()=>window.PFSB&&window.PFSB.configured();
 
+  /* ---- order confirmation screen ---- */
+  P.lastConfirmation=null;
+  function confirmation(){
+    const c=P.lastConfirmation;
+    if(!c){render(P.signed()?'orders':'home');return}
+    const flow=[['1','Submitted','No payment yet',1],['2','We verify','Fitment & stock',0],['3','Approved','Final price set',0],['4','Collect & pay','At Spintex',0]];
+    app.innerHTML=appHeader('Order received','Pay on pickup')+`<main class="page pfConfirm">
+      <section class="pfConfirmHero">
+        <div class="pfCheck">✓</div>
+        <h1>Order received</h1>
+        <p>No payment yet. PartFit confirms exact fitment and stock, sends the final price, and you pay when you collect at Spintex.</p>
+        <div class="pfRefBox"><div><small>Your reference</small><b class="mono">${P.esc(c.ref)}</b></div><button class="pfCopyRef" data-copy-ref="${P.esc(c.ref)}">Copy</button></div>
+        <div class="pfRefMeta">${c.items} item${c.items===1?'':'s'} · ${P.esc(c.vehicle||'No vehicle')} · provisional ${money(Number(c.total||0))}</div>
+      </section>
+      <section class="sec"><div class="head"><div><span class="sectionKicker">STATUS</span><h2>What happens next</h2></div></div>
+        <div class="pfFlow">${flow.map((f,i)=>`<article class="${f[3]?'on':''}"><div class="n">${f[0]}</div><h3>${f[1]}</h3><p>${f[2]}</p>${i<3?'<span class="line">→</span>':''}</article>`).join('')}</div>
+      </section>
+      <div class="pfConfirmCta">
+        <button class="btn red big" data-v3-track="${P.esc(c.ref)}">Track this order</button>
+        <button class="btn outlineNavy big" data-page="catalogue">Continue shopping</button>
+      </div>
+      <p class="pfConfirmNote">${CFG.wa?'We’ll also confirm the details with you on WhatsApp.':'A WhatsApp summary was prepared — send it to us to speed up approval.'}</p>
+      ${P.footer()}</main>${nav('orders')}`;
+  }
+  P.register('confirmation',confirmation);
+
+  document.addEventListener('click',e=>{
+    const cr=e.target.closest('[data-copy-ref]');if(!cr)return;
+    const ref=cr.dataset.copyRef;
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ref).then(()=>say('Reference copied')).catch(()=>say(ref))}else say(ref);
+  },true);
+
   function waSummary(ref,items,total,vehicle,name){
     const lines=items.map(i=>`• ${i.name} (${i.short||''}) ×${i.qty}`);
     whatsapp(`Hello PartFit Ghana, I have submitted an order for approval.\n\nOrder: ${ref}\n${lines.join('\n')}\n\nProvisional basket total: ${money(total)}\nVehicle: ${vehicle}${name?'\nName: '+name:''}\nPickup: Spintex\nPayment: PAY ON PICKUP AFTER APPROVAL\n\nPlease check exact fitment and stock, then confirm the final amount to pay when I collect.`);
@@ -39,10 +71,11 @@
     try{
       const res=await window.PFSB.submitOrder(label,items);
       const ref=res&&res.public_ref;
+      const total=res&&res.provisional_total!=null?res.provisional_total:provisional;
       S.cart=[];save();
-      waSummary(ref,snapshot,res&&res.provisional_total!=null?res.provisional_total:provisional,label,(P.profile()||{}).name);
-      say('Order '+ref+' submitted');
-      render('track',ref);
+      waSummary(ref,snapshot,total,label,(P.profile()||{}).name);
+      P.lastConfirmation={ref,total,items:snapshot.length,vehicle:label};
+      render('confirmation');
     }catch(err){
       if(btn){btn.disabled=false;btn.textContent=orig;}
       say(err.message||'Could not submit order. Please try again.');
@@ -58,6 +91,8 @@
     const o=saveRequest();if(!o)return;
     const lines=o.items.map(i=>`• ${i.name} (${i.short||''}) ×${i.qty} — ${money(i.price*i.qty)}`);
     whatsapp(`Hello PartFit Ghana, I would like to submit this order for approval.\n\nOrder: ${o.id}\n${lines.join('\n')}\n\nProvisional basket total: ${money(o.provisionalTotal)}\nVehicle: ${o.vehicle}\nName: ${o.name}\nPhone: ${o.phone}\nPickup: Spintex\nPayment: PAY ON PICKUP AFTER APPROVAL\n\nPlease check exact fitment and stock, then confirm whether the order is approved and send me the final amount to pay when I collect.`);
-    say(`Order ${o.id} saved`);
+    P.lastConfirmation={ref:o.id,total:o.provisionalTotal,items:o.items.length,vehicle:o.vehicle};
+    S.cart=[];save();
+    render('confirmation');
   },true);
 })();

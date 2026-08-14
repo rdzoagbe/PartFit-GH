@@ -583,3 +583,25 @@ h1,h2,h3{letter-spacing:-.02em}
 .detailShare{margin-top:11px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ln);background:var(--surface);color:var(--n);border-radius:11px;padding:9px 13px;font-weight:800;font-size:12px;cursor:pointer;box-shadow:var(--sh-sm);font-family:inherit}
 .detailShare:active{transform:scale(.97)}
 .detailShare:hover{background:var(--surface-2)}
+
+/* ==========================================================================
+   ORDER CONFIRMATION (portal-paypickup.js)
+   ========================================================================== */
+.pfConfirmHero{margin-top:14px;padding:26px 20px;border-radius:var(--r-2xl);text-align:center;
+  background:linear-gradient(160deg,var(--fit-cat-bg),var(--surface));border:1px solid color-mix(in srgb,var(--g) 26%,var(--ln))}
+.pfCheck{width:64px;height:64px;border-radius:50%;margin:0 auto;display:grid;place-items:center;color:#fff;font-size:32px;font-weight:900;
+  background:linear-gradient(135deg,var(--g),#0c6b39);box-shadow:0 12px 26px color-mix(in srgb,var(--g) 34%,transparent)}
+.pfConfirmHero h1{margin:14px 0 6px;font-size:26px;letter-spacing:-.03em}
+.pfConfirmHero p{margin:0 auto;max-width:44ch;color:var(--mu);font-size:13px;line-height:1.5}
+.pfRefBox{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px auto 0;max-width:340px;
+  padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--ln);box-shadow:var(--sh-sm);text-align:left}
+.pfRefBox small{display:block;font-size:9.5px;color:var(--mu2);text-transform:uppercase;letter-spacing:.06em}
+.pfRefBox b{font-size:18px;letter-spacing:.02em;color:var(--n)}
+.pfCopyRef{border:0;background:var(--n);color:#fff;border-radius:10px;padding:9px 13px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;flex:none}
+.pfCopyRef:active{transform:scale(.95)}
+.pfRefMeta{margin-top:12px;color:var(--mu);font-size:11.5px}
+.pfFlow article.on{border-color:color-mix(in srgb,var(--g) 45%,var(--ln));background:linear-gradient(135deg,var(--fit-cat-bg),var(--surface))}
+.pfFlow article.on .n{background:linear-gradient(135deg,var(--g),#0c6b39)}
+.pfConfirmCta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.pfConfirmNote{text-align:center;color:var(--mu2);font-size:11px;margin:14px 0 0}
+@media(max-width:460px){.pfConfirmCta{grid-template-columns:1fr}}
