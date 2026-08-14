@@ -25,6 +25,7 @@
   document.addEventListener('click',e=>{
     if(!e.target.closest('[data-submit]'))return;
     e.preventDefault();e.stopImmediatePropagation();
+    if(!P.signed()){say('Create a free account to reserve for pickup');render('signup');return}
     const o=saveRequest();if(!o)return;
     const lines=o.items.map(i=>`• ${i.name} (${i.short||''}) ×${i.qty} — ${money(i.price*i.qty)}`);
     whatsapp(`Hello PartFit Ghana, I would like to submit this order for approval.\n\nOrder: ${o.id}\n${lines.join('\n')}\n\nProvisional basket total: ${money(o.provisionalTotal)}\nVehicle: ${o.vehicle}\nName: ${o.name}\nPhone: ${o.phone}\nPickup: Spintex\nPayment: PAY ON PICKUP AFTER APPROVAL\n\nPlease check exact fitment and stock, then confirm whether the order is approved and send me the final amount to pay when I collect.`);

@@ -136,7 +136,7 @@
 
     if(e.target.closest('[data-demo-customer]')){sessionStorage.setItem('pfSafeDemo','1');say('Demo customer ready');account();return}
 
-    if(e.target.closest('[data-signout]')){sessionStorage.removeItem('pfSafeDemo');localStorage.removeItem(K.session);say('Signed out');render('home');return}
+    if(e.target.closest('[data-signout]')){sessionStorage.removeItem('pfSafeDemo');localStorage.removeItem(K.session);say('Signed out');render('home');if(P.showWelcome)P.showWelcome();return}
 
     if(e.target.closest('[data-garage-save]')){
       if(!S.vehicle)return say('Select a vehicle first');

@@ -356,4 +356,53 @@ h1,h2,h3{letter-spacing:-.02em}
   .pfHeroStats{grid-template-columns:1fr}
   .pfStats b{font-size:20px}
 }
+
+/* ==========================================================================
+   WELCOME / LANDING overlay (portal-welcome.js)
+   ========================================================================== */
+.pfWelcome{
+  position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;color:#fff;overflow-y:auto;
+  background:
+    radial-gradient(120% 70% at 88% -4%, color-mix(in srgb,var(--r) 46%,transparent), transparent 46%),
+    radial-gradient(95% 62% at -6% 104%, color-mix(in srgb,var(--n3) 62%,transparent), transparent 56%),
+    linear-gradient(158deg,#061428,#0b2a4e);
+  transition:opacity .42s ease, transform .42s ease;
+}
+.pfWelcome.gone{opacity:0;transform:translateY(-12px);pointer-events:none;visibility:hidden}
+.pfWelcome .wTop{flex:none;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 0;display:flex;align-items:center;gap:10px}
+.pfWelcome .wMark{display:flex;flex-direction:column;line-height:1}
+.pfWelcome .wMark b{font-size:20px;font-weight:900;letter-spacing:-.045em;color:#fff}
+.pfWelcome .wMark b span{color:#ff5a63}
+.pfWelcome .wMark .tb{margin-top:3px;height:3px;width:46px;border-radius:2px;background:linear-gradient(90deg,var(--r) 0 33%,var(--gold) 33% 66%,var(--g) 66% 100%)}
+.pfWelcome .wSkip{margin-left:auto;background:none;border:0;color:#cddef2;font-weight:700;font-size:13px;cursor:pointer}
+.pfWelcome .wBody{flex:1;display:flex;flex-direction:column;justify-content:center;padding:26px 24px 20px}
+.pfWelcome .wTag{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;font-size:10.5px;font-weight:800;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18)}
+.pfWelcome .wTag .tri{display:inline-block;width:20px;height:12px;border-radius:3px;background:linear-gradient(to bottom,var(--r) 0 33.3%,var(--gold) 33.3% 66.6%,var(--g) 66.6% 100%)}
+.pfWelcome h1{margin:16px 0 0;font-size:clamp(33px,9.4vw,46px);line-height:1.01;letter-spacing:-.046em;font-weight:900}
+.pfWelcome h1 em{color:#ff5a63;font-style:normal}
+.pfWelcome .wLede{margin:13px 0 0;color:#cddef2;font-size:14px;line-height:1.5;max-width:340px}
+.pfWelcome .wVehicle{display:flex;align-items:center;gap:12px;margin-top:22px;padding:12px 12px 12px 14px;border-radius:16px;cursor:pointer;width:100%;text-align:left;color:#fff;font:inherit;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22)}
+.pfWelcome .wVehicle .plate{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:12px;letter-spacing:.06em;color:#0b1b30;background:linear-gradient(#fff,#eef1f5);border-radius:7px;padding:8px 9px 8px 0;border:1.5px solid #cdd6e2;position:relative;flex:none}
+.pfWelcome .wVehicle .plate::before{content:"GH";position:absolute;left:0;top:0;bottom:0;width:16px;background:var(--n);color:#fff;font-size:7px;display:grid;place-items:center;border-radius:5px 0 0 5px}
+.pfWelcome .wVehicle .plate span{margin-left:20px}
+.pfWelcome .wVehicle .vt{flex:1;min-width:0}
+.pfWelcome .wVehicle .vt b{display:block;font-size:14px}
+.pfWelcome .wVehicle .vt small{display:block;color:#a9c1da;font-size:10.5px;margin-top:1px}
+.pfWelcome .wVehicle .chev{color:#ff8f95;font-size:20px;font-weight:800}
+.pfWelcome .wActions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.pfWelcome .wActions .btn{width:100%}
+.pfWelcome .wGuest{align-self:center;background:none;border:0;color:#cddef2;font-weight:700;font-size:13px;margin-top:14px;cursor:pointer;text-underline-offset:3px;text-decoration:underline}
+.pfWelcome .wPerks{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:6px 14px calc(20px + env(safe-area-inset-bottom,0px));border-radius:16px;overflow:hidden;background:rgba(255,255,255,.1)}
+.pfWelcome .wPerks div{background:rgba(9,22,40,.55);padding:12px 10px;text-align:center}
+.pfWelcome .wPerks b{display:block;font-size:11px}
+.pfWelcome .wPerks small{display:block;color:#a9c1da;font-size:9px;margin-top:2px}
+
+/* Guest gate on Orders */
+.pfLock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;margin-top:14px;padding:34px 22px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--ln);box-shadow:var(--sh)}
+.pfLock .lk{width:62px;height:62px;border-radius:18px;background:var(--surface-2,#eef3f9);display:grid;place-items:center;color:var(--n3);margin-bottom:4px}
+.pfLock h2{margin:4px 0 2px;font-size:20px;letter-spacing:-.025em}
+.pfLock p{margin:0 0 14px;color:var(--mu);font-size:12.5px;line-height:1.5;max-width:300px}
+.pfLock .btn{width:100%;max-width:290px}
+.pfLock .ln{border:0;background:none;color:var(--r);font-weight:800;font-size:13px;cursor:pointer;margin-top:2px}
+
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
