@@ -215,6 +215,7 @@ function product(id){
         <h1>${safe(p.name)}</h1>
         <div class="detailNo">Part / Ref: <b>${safe(p.short)}</b></div>
         <div class="detailPrice">${money(p.price)}</div>
+        <button class="detailShare" data-share-product="${p.id}" aria-label="Share this part">🔗 Share this part</button>
         <div class="fitBox ${f.cls}">
           <div class="fitIcon">${f.icon}</div><div><b>${safe(f.text)}</b><p>${safe(vehicleLabel())}</p><small>${safe(p.badge)} · ${safe(p.origin)}</small>${S.vehicle?`<button class="fitChangeCar" data-page="vehicle">Change vehicle</button>`:`<button class="btn red fitPickCar" data-page="vehicle">Select my car</button>`}</div>
         </div>
@@ -274,6 +275,15 @@ function add(id,toOrder=false){
 
 function whatsapp(text){
   window.open('https://wa.me/'+CFG.wa+'?text='+encodeURIComponent(text),'_blank','noopener');
+}
+
+function shareProduct(id){
+  const p=parts.find(x=>x.id===id); if(!p) return;
+  const url=location.origin+location.pathname+'#product:'+encodeURIComponent(id);
+  const data={title:'PartFit — '+p.name,text:p.name+' · PartFit Ghana',url};
+  if(navigator.share){ navigator.share(data).catch(()=>{}); return; }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(()=>say('Link copied')).catch(()=>say('Copy this link: '+url)); return; }
+  say('Copy this link: '+url);
 }
 
 function render(page){
@@ -354,6 +364,9 @@ document.addEventListener('click',e=>{
     whatsapp(`Hello PartFit Ghana, please confirm availability and fitment for ${p.name} (${p.short})${S.vehicle?' for my '+vehicleLabel():''}.`);
     return;
   }
+
+  const sp=e.target.closest('[data-share-product]');
+  if(sp){shareProduct(sp.dataset.shareProduct);return}
 
   if(e.target.closest('[data-submit]')){
     const name=document.getElementById('name').value.trim();
