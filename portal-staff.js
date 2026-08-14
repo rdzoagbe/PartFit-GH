@@ -56,7 +56,10 @@
   const info = (icon, title, msg, extra = '') => `<div class="card noOrders"><span>${icon}</span><h2>${title}</h2><p>${msg}</p>${extra}</div>`;
 
   function renderList(state) {
-    if (state === 'loading') return shell(info('⏳', 'Loading orders…', 'Fetching the queue.'));
+    if (state === 'loading') {
+      const sk = `<article class="card pfStaffCard skWrap"><span class="sk skLine" style="width:34%;height:12px"></span><span class="sk skLine" style="width:54%;height:15px;margin-top:11px"></span><span class="sk skLine" style="width:100%;height:46px;border-radius:12px;margin-top:12px"></span><span class="sk skLine" style="width:44%;height:15px;margin-top:12px"></span></article>`;
+      return shell(sk + sk);
+    }
     if (state && state.error) return shell(info('⚠️', 'Couldn’t load the queue', P.esc(state.error), '<button class="btn outlineNavy" data-staff-tab="' + curTab + '">Try again</button>'));
     const list = state || [];
     shell(list.length ? list.map(card).join('') : info('✓', 'Nothing here', 'No orders in this queue right now.'));
