@@ -6,7 +6,11 @@ The GitHub Pages build is intentionally safe for demonstration: customer orders,
 
 Create a Supabase project, choose the nearest suitable region, enable email authentication, and keep email confirmation enabled for production. In Auth URL Configuration set the Site URL to the final PartFit HTTPS domain and add only the exact GitHub Pages URL while testing.
 
-## 2. Run the SQL in this exact order
+## 2. Run the SQL
+
+**Simplest:** paste **`backend/setup-all.sql`** into the Supabase SQL editor and Run it once. It is idempotent (safe to re-run) and combines everything below in the correct order, so ordering mistakes or partial re-runs cannot break the schema.
+
+Or run the individual files in this exact order:
 
 1. `backend/supabase-schema.sql`
 2. `backend/v5-products.sql`
