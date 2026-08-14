@@ -1,4 +1,4 @@
-const CACHE='partfit-v6-20260814-7';
+const CACHE='partfit-v6-20260814-8';
 const CORE=['./','./index.html','./styles.css','./extras.css','./v4-core.css','./v6.css','./data.js','./partfit-config.js','./supabase-client.js','./app.js','./runtime-guard.js','./extras.js','./portal-shell.js','./portal-paypickup.js','./portal-account.js','./portal-orders-page.js','./portal-track.js','./portal-home-page.js','./portal-pages.js','./portal-faq.js','./portal-contact.js','./portal-policy.js','./portal-staff.js','./portal-bootstrap.js','./portal-welcome.js','./portal-nav.js','./portal-shell.css','./portal-home.css','./portal-account.css','./portal-orders.css','./portal-support.css','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

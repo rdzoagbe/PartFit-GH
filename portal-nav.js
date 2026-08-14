@@ -16,6 +16,12 @@
     privacy: 'home', terms: 'home', returns: 'home', delivery: 'home', fitment: 'home', staff: 'account'
   };
   P.cur = 'home';
+  // if we've been deep-linked (e.g. a shared #product:… url), start from that page
+  (() => {
+    const h = (location.hash || '').slice(1).split(':')[0];
+    const M = { parts: 'catalogue', cart: 'order', product: 'product', vehicle: 'vehicle', track: 'track', orders: 'orders', account: 'account', request: 'request', login: 'login', signup: 'signup', faq: 'faq', contact: 'contact', privacy: 'privacy', terms: 'terms', returns: 'returns', delivery: 'delivery', fitment: 'fitment', staff: 'staff', home: 'home' };
+    if (M[h]) P.cur = M[h];
+  })();
 
   // track the current page across every navigation mechanism
   if (typeof render === 'function') {
@@ -52,4 +58,13 @@
     e.preventDefault(); e.stopPropagation();
     render(PARENT[P.cur] || 'home');
   }, true);
+
+  // Deep link onto a sub-page: the initial render happened before this wrapper
+  // existed, so re-render once so the header's Back button applies.
+  (() => {
+    const raw = (location.hash || '').slice(1), parts = raw.split(':'), arg = decodeURIComponent(parts.slice(1).join(':') || '');
+    const M = { product: 'product', track: 'track', vehicle: 'vehicle', cart: 'order', login: 'login', signup: 'signup', faq: 'faq', contact: 'contact', privacy: 'privacy', terms: 'terms', returns: 'returns', delivery: 'delivery', fitment: 'fitment' };
+    const page = M[parts[0]];
+    if (page && (page in PARENT)) render(page, arg);
+  })();
 })();

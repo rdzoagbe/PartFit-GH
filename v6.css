@@ -578,3 +578,8 @@ h1,h2,h3{letter-spacing:-.02em}
 .pfApprove input.pfApprovePrice{font-family:var(--fs-mono);font-weight:700}
 .pfApproveBtns{display:flex;gap:8px;margin-top:11px}
 @media(max-width:480px){.pfApproveRow{grid-template-columns:1fr}}
+
+/* share this part (product detail) */
+.detailShare{margin-top:11px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ln);background:var(--surface);color:var(--n);border-radius:11px;padding:9px 13px;font-weight:800;font-size:12px;cursor:pointer;box-shadow:var(--sh-sm);font-family:inherit}
+.detailShare:active{transform:scale(.97)}
+.detailShare:hover{background:var(--surface-2)}

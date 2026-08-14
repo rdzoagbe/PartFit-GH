@@ -65,7 +65,10 @@
   }
   P.showWelcome=show;
 
-  if(!P.signed() && sessionStorage.getItem(SEEN)!=='1'){
+  // Don't cover a shared deep link (e.g. #product:…) with the welcome splash —
+  // land the visitor on the content they were sent to.
+  const deepLinked = (() => { const h = (location.hash || '').slice(1).split(':')[0]; return h && h !== 'home'; })();
+  if(!P.signed() && sessionStorage.getItem(SEEN)!=='1' && !deepLinked){
     build();
   }
 })();
