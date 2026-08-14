@@ -15,7 +15,9 @@ create policy "staff role self read" on public.staff_roles for select using (use
 
 create or replace function public.make_partfit_ref()
 returns text language sql volatile set search_path=public as $$
-  select 'PF-'||to_char(now(),'YYMMDD')||'-'||upper(substr(encode(gen_random_bytes(4),'hex'),1,6));
+  -- md5/random/clock_timestamp are core (pg_catalog), so this works regardless of
+  -- where pgcrypto is installed (avoids gen_random_bytes search_path issues on Supabase).
+  select 'PF-'||to_char(now(),'YYMMDD')||'-'||upper(substr(md5(random()::text||clock_timestamp()::text),1,6));
 $$;
 
 create or replace function public.submit_order(p_vehicle_label text,p_items jsonb)

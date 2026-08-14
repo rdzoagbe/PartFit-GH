@@ -22,7 +22,7 @@
 
   function accountTop(){const p=P.profile();return P.signed()?`<button class="v3AccountTop" data-page="account"><b>${P.initials(p.name)}</b><small>Account</small></button>`:`<button class="v3AccountTop" data-page="login"><b>👤</b><small>Sign in</small></button>`}
   appHeader=function(title='PartFit Ghana',sub='Right Part. Right Car.'){
-    return `<header class="top v3Top"><button class="brandMark" data-page="home"><span>PF</span><small>GH</small></button><div class="title">${P.esc(title)}<small>${P.esc(sub)}</small></div><div class="v3Desktop"><button data-page="catalogue">Parts</button><button data-page="request">Request</button><button data-page="faq">FAQ</button><button data-page="contact">Contact</button></div><div class="grow"></div><button class="topAction" data-help>WA</button><button class="cartBtn" data-page="order">🛒 <b>${cartCount()}</b></button>${accountTop()}</header>`;
+    return `<header class="top v3Top"><button class="brandMark" data-page="home"><span>PF</span><small>GH</small></button><div class="title">${P.esc(title)}<small>${P.esc(sub)}</small></div><div class="v3Desktop"><button data-page="catalogue">Parts</button><button data-page="request">Request</button></div><div class="grow"></div><button class="topAction" data-help>WA</button><button class="cartBtn" data-page="order">🛒 <b>${cartCount()}</b></button>${accountTop()}</header>`;
   };
   nav=function(active){const a=active==='order'?'orders':active,n=[['home','⌂','Home'],['catalogue','▦','Parts'],['request','⌕','Request'],['orders','◎','Orders'],['account','👤','Account']];return `<nav class="bottom">${n.map(x=>`<button class="${a===x[0]?'on':''}" data-page="${x[0]}"><span>${x[1]}</span>${x[2]}</button>`).join('')}</nav>`};
 })();
