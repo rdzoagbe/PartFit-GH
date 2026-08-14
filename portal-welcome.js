@@ -39,6 +39,7 @@
         <div><b>📍 Spintex</b><small>Local collection</small></div>
       </div>`;
     document.body.appendChild(el);
+    document.body.style.overflow='hidden';   /* lock scroll behind the overlay */
     el.addEventListener('click',e=>{
       const b=e.target.closest('[data-w]');if(!b)return;
       const w=b.dataset.w;
@@ -53,12 +54,14 @@
   function dismiss(){
     sessionStorage.setItem(SEEN,'1');
     if(el){el.classList.add('gone');}
+    document.body.style.overflow='';   /* release the scroll lock */
   }
   function show(){
     if(P.signed())return;              /* signed-in users skip the splash */
     if(!el)build();
     sessionStorage.removeItem(SEEN);
     el.classList.remove('gone');
+    document.body.style.overflow='hidden';  /* lock scroll behind the overlay */
   }
   P.showWelcome=show;
 
