@@ -1,0 +1,526 @@
+/* ==========================================================================
+   PartFit Ghana — V6 design refresh (loaded last, authoritative)
+   Token-first restyle: redefining the shared tokens re-skins the whole app,
+   then targeted component polish + the rebuilt landing / account screens.
+   ========================================================================== */
+
+:root{
+  /* Brand */
+  --n:#0a1f3d;          /* deep navy */
+  --n2:#12406f;         /* navy 2 */
+  --n3:#1e5fa0;         /* navy accent */
+  --r:#e01322;          /* PartFit red */
+  --r2:#ff3b45;         /* red highlight */
+  --g:#12924b;          /* fitment / WhatsApp green */
+  --gold:#f6a821;       /* amber accent */
+
+  /* Surfaces & text */
+  --bg:#eef2f7;
+  --bg2:#f7f9fc;
+  --surface:#ffffff;
+  --tx:#0d1b30;
+  --mu:#5d6c82;
+  --mu2:#8695a8;
+  --ln:#e4e9f1;
+  --ln2:#eef2f7;
+
+  /* Radii */
+  --r-xs:10px; --r-sm:13px; --r-md:17px; --r-lg:22px; --r-xl:28px; --r-2xl:34px;
+
+  /* Shadows */
+  --sh:0 10px 30px rgba(10,31,61,.07);
+  --sh-sm:0 4px 14px rgba(10,31,61,.06);
+  --sh-lg:0 24px 55px rgba(10,31,61,.16);
+  --sh-red:0 12px 26px rgba(224,19,34,.28);
+  --sh-navy:0 16px 34px rgba(10,31,61,.22);
+
+  /* V4 aliases so older rules pick up the new language */
+  --v4-blue:#0a1f3d; --v4-blue2:#12406f; --v4-red:#e01322;
+  --v4-green:#12924b; --v4-soft:#f2f5f9; --v4-shadow:0 18px 46px rgba(10,31,61,.11);
+
+  /* concept language */
+  --fs-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --surface-2:#eef3f9;
+  --fit-cat-bg:#e7f7ed; --fit-cat-ink:#0e6f38;
+  --fit-con-bg:#fdf2d6; --fit-con-ink:#8a5d00;
+  --fit-non-bg:#eef2f7; --fit-non-ink:#586880;
+}
+
+/* ---------- Base ---------- */
+html,body{background:var(--bg)}
+.shell{background:radial-gradient(1200px 480px at 50% -8%,#fbfcfe 0,var(--bg) 62%);padding-bottom:90px}
+body{
+  color:var(--tx);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",sans-serif;
+  letter-spacing:-.005em;
+}
+h1,h2,h3{letter-spacing:-.02em}
+.page{width:min(100%,1040px);padding:16px}
+.sec{margin-top:26px}
+.sectionKicker{color:var(--r);font-size:10px;font-weight:900;letter-spacing:.14em}
+.head h2{font-size:20px}
+.link{color:var(--r);font-size:12px}
+::selection{background:#0a1f3d;color:#fff}
+
+/* ---------- Header ---------- */
+.top,.top.v3Top{
+  background:rgba(255,255,255,.82);
+  backdrop-filter:saturate(1.4) blur(16px);
+  -webkit-backdrop-filter:saturate(1.4) blur(16px);
+  border-bottom:1px solid rgba(228,233,241,.9);
+  box-shadow:0 4px 20px rgba(10,31,61,.05);
+  min-height:64px;
+}
+.brandMark{
+  width:44px;height:44px;border-radius:14px;
+  background:linear-gradient(150deg,var(--n) 20%,var(--r) 130%);
+  box-shadow:var(--sh-navy);font-weight:900;letter-spacing:-.5px;
+}
+.brandMark small{font-size:7px;opacity:.9}
+.title{font-size:16px;font-weight:900}
+.title small{color:var(--mu);font-weight:700}
+.cartBtn,.topAction,.v3AccountTop{
+  background:#eef3f9;border-radius:13px;height:42px;color:var(--n);font-weight:800;
+  transition:transform .15s ease,background .15s ease;
+}
+.cartBtn:active,.topAction:active,.v3AccountTop:active{transform:scale(.94)}
+.topAction{color:var(--g)}
+.cartBtn b{background:var(--r);box-shadow:0 3px 8px rgba(224,19,34,.4)}
+.v3AccountTop b{font-size:13px}
+.v3Desktop button:hover{background:#eef3f9}
+
+/* ---------- Bottom nav ---------- */
+.bottom{
+  background:rgba(255,255,255,.9);
+  backdrop-filter:saturate(1.4) blur(18px);
+  -webkit-backdrop-filter:saturate(1.4) blur(18px);
+  border-top:1px solid rgba(228,233,241,.9);
+  box-shadow:0 -6px 24px rgba(10,31,61,.06);
+}
+.bottom button{color:var(--mu2);font-size:9.5px;font-weight:700;position:relative;transition:color .15s ease}
+.bottom span{font-size:20px;transition:transform .15s ease}
+.bottom button:active span{transform:scale(.85)}
+.bottom .on{color:var(--r)}
+.bottom .on span{transform:translateY(-1px)}
+.bottom .on::before{
+  content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  width:26px;height:3px;border-radius:99px;background:var(--r);
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  border-radius:14px;min-height:48px;font-weight:800;letter-spacing:-.01em;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .14s ease,box-shadow .14s ease,filter .14s ease;
+}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn.red{background:linear-gradient(135deg,var(--r),#c00d1a);box-shadow:var(--sh-red)}
+.btn.red:hover{filter:brightness(1.04)}
+.btn.wa{background:linear-gradient(135deg,#15a352,#0f7d3f);box-shadow:0 12px 26px rgba(18,146,75,.26)}
+.btn.dark{background:#fff;color:var(--n);box-shadow:var(--sh-sm)}
+.btn.ghost,.btn.glass{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.34);backdrop-filter:blur(6px)}
+.btn.glass:hover{background:rgba(255,255,255,.2)}
+.btn.outline{background:#fff;color:var(--g);border:1.5px solid var(--g)}
+.btn.outlineNavy{background:#fff;color:var(--n);border:1.5px solid #c3d0e0;box-shadow:var(--sh-sm)}
+.btn.big{min-height:54px;font-size:15px;border-radius:15px}
+
+/* ---------- Search ---------- */
+.search{
+  border-radius:16px;min-height:54px;border:1px solid var(--ln);
+  box-shadow:var(--sh-sm);background:#fff;
+}
+.search>span{color:var(--mu2);font-size:18px}
+.search input::placeholder{color:var(--mu2)}
+.search button{background:var(--n);border-radius:12px;font-size:12px;padding:11px 14px}
+
+/* ---------- Cards, inputs, chips ---------- */
+.card{border-radius:var(--r-lg);border:1px solid var(--ln);box-shadow:var(--sh)}
+.field label{font-size:12px;font-weight:800}
+.field input,.field select,.field textarea{
+  min-height:50px;border-radius:13px;border:1.5px solid #dbe3ee;background:#fbfcfe;
+  padding:11px 13px;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--n3);background:#fff;box-shadow:0 0 0 4px rgba(30,95,160,.12);
+}
+.chip{border-radius:99px;padding:9px 14px;font-weight:700;border:1px solid var(--ln);box-shadow:var(--sh-sm);transition:transform .14s ease}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--n);border-color:var(--n);box-shadow:var(--sh-navy)}
+
+/* ---------- Fit pills ---------- */
+.fitPill{border-radius:99px;padding:5px 9px;font-size:9.5px;font-weight:800}
+.fitPill.catalog{color:#0e6f38;background:#e7f7ed}
+.fitPill.check{color:#9a6300;background:#fff2cf}
+.fitPill.neutral{color:#586880;background:#eef2f7}
+
+/* ---------- Product cards ---------- */
+.product{border-radius:var(--r-md);border:1px solid var(--ln);box-shadow:var(--sh-sm);padding:11px}
+.product:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:#d4ddeb}
+.productImg{border-radius:14px}
+.product h3{font-size:14px;font-weight:800}
+.price,.detailPrice{color:var(--r)}
+.plus{
+  border-radius:12px;width:38px;height:38px;font-size:22px;
+  background:linear-gradient(135deg,var(--r),#c00d1a);box-shadow:var(--sh-red);
+}
+.plus:active{transform:scale(.9)}
+.referencePhotoBadge{border-radius:99px;background:rgba(10,31,61,.86)}
+
+/* ---------- Category tiles ---------- */
+.cat{border-radius:16px;border:1px solid var(--ln);box-shadow:var(--sh-sm);overflow:hidden}
+.cat:hover{transform:translateY(-3px);box-shadow:var(--sh)}
+.catImg{height:96px}
+.cat b{padding:10px 10px 12px;font-size:11.5px;font-weight:800}
+
+/* ==========================================================================
+   LANDING (rebuilt in portal-home-page.js)
+   ========================================================================== */
+.pfHome .search{margin-top:14px}
+.pfHero{
+  position:relative;overflow:hidden;margin-top:14px;
+  padding:30px 22px 26px;border-radius:var(--r-2xl);color:#fff;
+  background:
+    radial-gradient(120% 90% at 88% 6%,rgba(224,19,34,.42),transparent 42%),
+    radial-gradient(80% 70% at 4% 98%,rgba(30,95,160,.55),transparent 55%),
+    linear-gradient(150deg,#08213f 8%,#0c3563 92%);
+  box-shadow:var(--sh-lg);
+}
+.pfHero::after{
+  content:"";position:absolute;right:-90px;bottom:-120px;width:280px;height:280px;
+  border:1px solid rgba(255,255,255,.09);border-radius:50%;
+  box-shadow:0 0 0 40px rgba(255,255,255,.03);
+}
+.pfFlag{
+  display:inline-flex;align-items:center;gap:7px;position:relative;z-index:1;
+  padding:7px 12px;border-radius:99px;font-size:11px;font-weight:800;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+}
+.pfHero h1{position:relative;z-index:1;margin:16px 0 10px;font-size:clamp(32px,9.2vw,54px);line-height:1;letter-spacing:-.045em}
+.pfHero h1 em{font-style:normal;color:#ff5860}
+.pfHero p{position:relative;z-index:1;max-width:560px;margin:0;color:#d6e3f2;font-size:14px}
+.pfHeroCta{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.pfHeroCta .btn{flex:1;min-width:150px}
+.pfHeroStats{
+  position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px;
+}
+.pfHeroStats>div{padding:11px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.pfHeroStats b{display:block;font-size:13px}
+.pfHeroStats small{display:block;margin-top:2px;color:#aec3da;font-size:9.5px}
+
+/* Vehicle dock / callout */
+.pfCarDock{
+  display:flex;align-items:center;gap:12px;margin-top:16px;padding:13px 14px;
+  border-radius:var(--r-md);background:linear-gradient(135deg,#e9f8ee,#fff);
+  border:1px solid #bfe6cb;box-shadow:var(--sh-sm);
+}
+.pfCarDock .ico{width:42px;height:42px;border-radius:13px;background:#fff;display:grid;place-items:center;font-size:22px;box-shadow:var(--sh-sm)}
+.pfCarDock .txt{flex:1;min-width:0}
+.pfCarDock b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pfCarDock small{display:block;color:#4d6b58;font-size:10px}
+.pfCarDock button{border:0;background:var(--g);color:#fff;border-radius:11px;padding:10px 13px;font-weight:800;font-size:11px}
+.pfCarPick{
+  display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px;
+  border-radius:var(--r-md);background:#fff;border:1px dashed #c7d3e2;box-shadow:var(--sh-sm);
+}
+.pfCarPick .ico{width:42px;height:42px;border-radius:13px;background:#eef3f9;display:grid;place-items:center;font-size:22px}
+.pfCarPick .txt{flex:1;min-width:0}
+.pfCarPick b{display:block;font-size:13px}
+.pfCarPick small{display:block;color:var(--mu);font-size:10.5px}
+.pfCarPick button{border:0;background:var(--n);color:#fff;border-radius:11px;padding:10px 13px;font-weight:800;font-size:11px;white-space:nowrap}
+
+/* Pay-on-pickup steps */
+.pfFlow{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pfFlow article{position:relative;padding:16px 14px;border-radius:var(--r-md);background:#fff;border:1px solid var(--ln);box-shadow:var(--sh-sm)}
+.pfFlow .n{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--n),var(--n2))}
+.pfFlow article:last-child .n{background:linear-gradient(135deg,var(--g),#0f7d3f)}
+.pfFlow h3{margin:11px 0 3px;font-size:13.5px}
+.pfFlow p{margin:0;color:var(--mu);font-size:11px}
+.pfFlow .line{position:absolute;top:31px;right:-6px;color:var(--ln);font-size:12px;display:none}
+
+/* Promise / account promo / pickup / request */
+.pfPromise{
+  display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:start;padding:20px;
+  border-radius:var(--r-lg);border:1px solid #c7ecd3;background:linear-gradient(135deg,#eefaf1,#fff);
+}
+.pfPromise .ico{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--g),#0f7d3f);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900;box-shadow:0 10px 22px rgba(18,146,75,.28)}
+.pfPromise h2{margin:0 0 5px;font-size:18px}
+.pfPromise p{margin:0;color:var(--mu)}
+
+.pfPromo{
+  position:relative;overflow:hidden;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;
+  padding:20px;border-radius:var(--r-lg);color:#fff;
+  background:radial-gradient(90% 120% at 100% 0,rgba(30,95,160,.6),transparent 46%),linear-gradient(135deg,#0a1f3d,#123a6b);
+  box-shadow:var(--sh-navy);
+}
+.pfPromo h2{margin:4px 0 5px;font-size:19px}
+.pfPromo p{margin:0;color:#cfdcec;font-size:12px}
+.pfPromo .btn{white-space:nowrap}
+
+.pfPickup{
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;padding:18px;
+  border-radius:var(--r-lg);background:#fff;border:1px solid var(--ln);box-shadow:var(--sh)
+}
+.pfPickup .pin{width:52px;height:52px;border-radius:16px;background:#eef3f9;display:grid;place-items:center;font-size:26px}
+.pfPickup h2{margin:2px 0 3px;font-size:16px}
+.pfPickup p{margin:0;color:var(--mu);font-size:12px}
+.pfPickup .btn{grid-column:1/-1}
+
+.pfNote{color:var(--mu2);font-size:10px;line-height:1.6;margin:22px 4px 4px}
+
+/* ==========================================================================
+   AUTH (sign in / create account) — portal-account.js
+   ========================================================================== */
+.pfAuth{
+  position:relative;overflow:hidden;margin-top:14px;padding:26px 22px;border-radius:var(--r-2xl);color:#fff;
+  background:radial-gradient(110% 90% at 90% 4%,rgba(224,19,34,.4),transparent 44%),linear-gradient(150deg,#08213f,#0c3563);
+  box-shadow:var(--sh-lg);
+}
+.pfAuth h1{margin:12px 0 8px;font-size:clamp(26px,7.5vw,36px);line-height:1.04}
+.pfAuth p{margin:0;color:#cfdcec;font-size:13px;max-width:460px}
+.pfAuthPerks{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.pfAuthPerks span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:7px 11px;font-size:11px;font-weight:700}
+
+.pfTabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:16px;padding:5px;background:#eef3f9;border-radius:15px;border:1px solid var(--ln)}
+.pfTabs button{border:0;background:transparent;border-radius:11px;min-height:44px;font-weight:800;color:var(--mu);transition:.15s}
+.pfTabs button.on{background:#fff;color:var(--n);box-shadow:var(--sh-sm)}
+
+.pfAuthCard{padding:18px;margin-top:14px}
+.pfAuthCard .btn{margin-top:4px}
+.pfDivider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mu2);font-size:11px;font-weight:700}
+.pfDivider::before,.pfDivider::after{content:"";flex:1;height:1px;background:var(--ln)}
+.pfSwap{text-align:center;margin-top:14px;color:var(--mu);font-size:12px}
+.pfSwap button{border:0;background:none;color:var(--r);font-weight:800}
+.pfPwField{position:relative}
+.pfPwField .toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:#eef3f9;color:var(--n);border-radius:9px;padding:8px 10px;font-size:11px;font-weight:800}
+.pfErr{color:var(--r);font-size:11.5px;font-weight:700;margin:6px 2px 0;min-height:0}
+.prototypeNotice,.pfProto{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin-top:16px;padding:13px;border-radius:14px;background:#fff8e6;border:1px solid #f2d894}
+.pfProto .ico{font-size:16px}
+.pfProto b{display:block;font-size:11.5px;color:#7a5c00}
+.pfProto span{color:#8a6a1a;font-size:10.5px;line-height:1.45}
+
+/* ==========================================================================
+   DASHBOARD — portal-account.js
+   ========================================================================== */
+.pfDashHero{
+  position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;margin-top:14px;padding:20px;
+  border-radius:var(--r-2xl);color:#fff;
+  background:radial-gradient(90% 120% at 100% 0,rgba(30,95,160,.55),transparent 48%),linear-gradient(140deg,#08213f,#123a6b);
+  box-shadow:var(--sh-lg);
+}
+.pfDashHero .av{
+  width:60px;height:60px;border-radius:19px;flex:none;display:grid;place-items:center;font-weight:900;font-size:22px;
+  background:linear-gradient(135deg,var(--r),#c00d1a);box-shadow:var(--sh-red);
+}
+.pfDashHero .who{flex:1;min-width:0}
+.pfDashHero h1{margin:2px 0 2px;font-size:22px}
+.pfDashHero small{color:#bccfe4;font-size:11px}
+.pfDashHero .badge{display:inline-block;margin-bottom:3px;padding:3px 9px;border-radius:99px;font-size:9px;font-weight:900;letter-spacing:.1em;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2)}
+.pfSignout{border:0;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:12px;padding:10px 12px;font-weight:800;font-size:11px;white-space:nowrap}
+
+.pfStats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.pfStats button{border:1px solid var(--ln);background:#fff;border-radius:var(--r-md);padding:14px 10px;text-align:center;box-shadow:var(--sh-sm);transition:transform .14s ease}
+.pfStats button:active{transform:scale(.96)}
+.pfStats b{display:block;font-size:24px;font-weight:900;color:var(--n);letter-spacing:-.03em}
+.pfStats small{display:block;margin-top:2px;color:var(--mu);font-size:10px;font-weight:700}
+
+.pfDashGrid{display:grid;gap:12px;margin-top:14px}
+.pfPanel{padding:16px}
+.pfPanel .head{margin-bottom:6px}
+.pfPanel .head h2{font-size:16px}
+.pfRow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--ln)}
+.pfRow:first-of-type{border-top:0}
+.pfRow .ico{width:38px;height:38px;border-radius:12px;background:#eef3f9;display:grid;place-items:center;font-size:18px;flex:none}
+.pfRow .mid{flex:1;min-width:0}
+.pfRow .mid b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pfRow .mid small{display:block;color:var(--mu);font-size:10.5px}
+.pfRow .amt{font-weight:900;color:var(--n);font-size:13px}
+.pfRow .go{border:0;background:#eef3f9;color:var(--n);border-radius:10px;padding:8px 11px;font-weight:800;font-size:11px}
+.pfRow .rm{border:0;background:none;color:var(--mu2);font-size:20px;line-height:1;padding:0 4px}
+.pfPanel .empty{padding:18px 8px;text-align:center}
+.pfPanel .empty .ico{font-size:30px;margin-bottom:6px}
+.pfQuick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.pfQuick button{display:flex;align-items:center;gap:10px;border:1px solid var(--ln);background:#fff;border-radius:var(--r-md);padding:14px;font-weight:800;color:var(--n);box-shadow:var(--sh-sm);text-align:left}
+.pfQuick button span{font-size:20px}
+
+/* ---------- Footer polish ---------- */
+.v3Footer{border-radius:var(--r-2xl) var(--r-2xl) 0 0!important;background:linear-gradient(150deg,#08213f,#0c3563)!important}
+.v3FootGrid button{display:block;width:fit-content;font-weight:700}
+.v3FootGrid button:hover{color:#fff!important}
+.v3FootGrid h4{margin-bottom:6px;font-size:13px}
+
+/* ---------- Responsive ---------- */
+@media(min-width:600px){
+  .pfFlow{grid-template-columns:repeat(4,1fr)}
+  .pfFlow .line{display:block}
+  .pfHeroCta .btn{flex:0 1 auto}
+  .pfDashGrid{grid-template-columns:1fr 1fr}
+  .pfQuick{grid-template-columns:repeat(4,1fr)}
+}
+@media(min-width:720px){
+  .pfHero{padding:44px 40px}
+}
+@media(max-width:360px){
+  .pfHeroStats{grid-template-columns:1fr}
+  .pfStats b{font-size:20px}
+}
+
+/* ==========================================================================
+   WELCOME / LANDING overlay (portal-welcome.js)
+   ========================================================================== */
+.pfWelcome{
+  position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;color:#fff;overflow-y:auto;
+  background:
+    radial-gradient(120% 70% at 88% -4%, color-mix(in srgb,var(--r) 46%,transparent), transparent 46%),
+    radial-gradient(95% 62% at -6% 104%, color-mix(in srgb,var(--n3) 62%,transparent), transparent 56%),
+    linear-gradient(158deg,#061428,#0b2a4e);
+  transition:opacity .42s ease, transform .42s ease;
+}
+.pfWelcome.gone{opacity:0;transform:translateY(-12px);pointer-events:none;visibility:hidden}
+.pfWelcome .wTop{flex:none;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 0;display:flex;align-items:center;gap:10px}
+.pfWelcome .wMark{display:flex;flex-direction:column;line-height:1}
+.pfWelcome .wMark b{font-size:20px;font-weight:900;letter-spacing:-.045em;color:#fff}
+.pfWelcome .wMark b span{color:#ff5a63}
+.pfWelcome .wMark .tb{margin-top:3px;height:3px;width:46px;border-radius:2px;background:linear-gradient(90deg,var(--r) 0 33%,var(--gold) 33% 66%,var(--g) 66% 100%)}
+.pfWelcome .wSkip{margin-left:auto;background:none;border:0;color:#cddef2;font-weight:700;font-size:13px;cursor:pointer}
+.pfWelcome .wBody{flex:1;display:flex;flex-direction:column;justify-content:center;padding:26px 24px 20px}
+.pfWelcome .wTag{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;font-size:10.5px;font-weight:800;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18)}
+.pfWelcome .wTag .tri{display:inline-block;width:20px;height:12px;border-radius:3px;background:linear-gradient(to bottom,var(--r) 0 33.3%,var(--gold) 33.3% 66.6%,var(--g) 66.6% 100%)}
+.pfWelcome h1{margin:16px 0 0;font-size:clamp(33px,9.4vw,46px);line-height:1.01;letter-spacing:-.046em;font-weight:900}
+.pfWelcome h1 em{color:#ff5a63;font-style:normal}
+.pfWelcome .wLede{margin:13px 0 0;color:#cddef2;font-size:14px;line-height:1.5;max-width:340px}
+.pfWelcome .wVehicle{display:flex;align-items:center;gap:12px;margin-top:22px;padding:12px 12px 12px 14px;border-radius:16px;cursor:pointer;width:100%;text-align:left;color:#fff;font:inherit;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22)}
+.pfWelcome .wVehicle .plate{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:12px;letter-spacing:.06em;color:#0b1b30;background:linear-gradient(#fff,#eef1f5);border-radius:7px;padding:8px 9px 8px 0;border:1.5px solid #cdd6e2;position:relative;flex:none}
+.pfWelcome .wVehicle .plate::before{content:"GH";position:absolute;left:0;top:0;bottom:0;width:16px;background:var(--n);color:#fff;font-size:7px;display:grid;place-items:center;border-radius:5px 0 0 5px}
+.pfWelcome .wVehicle .plate span{margin-left:20px}
+.pfWelcome .wVehicle .vt{flex:1;min-width:0}
+.pfWelcome .wVehicle .vt b{display:block;font-size:14px}
+.pfWelcome .wVehicle .vt small{display:block;color:#a9c1da;font-size:10.5px;margin-top:1px}
+.pfWelcome .wVehicle .chev{color:#ff8f95;font-size:20px;font-weight:800}
+.pfWelcome .wActions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.pfWelcome .wActions .btn{width:100%}
+.pfWelcome .wGuest{align-self:center;background:none;border:0;color:#cddef2;font-weight:700;font-size:13px;margin-top:14px;cursor:pointer;text-underline-offset:3px;text-decoration:underline}
+.pfWelcome .wPerks{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:6px 14px calc(20px + env(safe-area-inset-bottom,0px));border-radius:16px;overflow:hidden;background:rgba(255,255,255,.1)}
+.pfWelcome .wPerks div{background:rgba(9,22,40,.55);padding:12px 10px;text-align:center}
+.pfWelcome .wPerks b{display:block;font-size:11px}
+.pfWelcome .wPerks small{display:block;color:#a9c1da;font-size:9px;margin-top:2px}
+
+/* Guest gate on Orders */
+.pfLock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;margin-top:14px;padding:34px 22px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--ln);box-shadow:var(--sh)}
+.pfLock .lk{width:62px;height:62px;border-radius:18px;background:var(--surface-2,#eef3f9);display:grid;place-items:center;color:var(--n3);margin-bottom:4px}
+.pfLock h2{margin:4px 0 2px;font-size:20px;letter-spacing:-.025em}
+.pfLock p{margin:0 0 14px;color:var(--mu);font-size:12.5px;line-height:1.5;max-width:300px}
+.pfLock .btn{width:100%;max-width:290px}
+.pfLock .ln{border:0;background:none;color:var(--r);font-weight:800;font-size:13px;cursor:pointer;margin-top:2px}
+
+/* ==========================================================================
+   CONCEPT LANGUAGE PASS — monospace technical data + refined browsing/order
+   Brings the concept mockup's design language across catalogue → product →
+   order → orders/track, reusing the existing markup classes.
+   ========================================================================== */
+
+/* --- monospace for the numbers/refs (the signature) --- */
+.eyebrow,.price,.detailPrice,.stock,.detailNo,.specGrid b,
+.orderRef,.v3OrderFoot b,.v3ApprovalAmount b,.cartItem strong,.sum b,
+.total .price,.resultLine b{
+  font-family:var(--fs-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.eyebrow{text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--mu2)}
+.price{font-weight:700}
+.detailPrice{font-weight:700;font-size:27px}
+
+/* --- fitment pills: refined certainty system --- */
+.fitPill{gap:5px;padding:5px 10px;font-size:10px;font-weight:800;border-radius:99px;align-items:center}
+.fitPill.catalog{background:var(--fit-cat-bg);color:var(--fit-cat-ink)}
+.fitPill.check{background:var(--fit-con-bg);color:var(--fit-con-ink)}
+.fitPill.neutral{background:var(--fit-non-bg);color:var(--fit-non-ink)}
+
+/* --- product cards --- */
+.product{padding:11px;gap:12px;border-radius:var(--r-md);box-shadow:var(--sh-sm)}
+.product h3{font-size:14px;font-weight:750;letter-spacing:-.02em;line-height:1.24;margin:4px 0 7px}
+.productImg{border-radius:13px}
+.productMeta{gap:9px;margin-top:9px}
+.stock{color:var(--g)}
+.stock:not(.low){color:var(--g)}
+.catalogueGrid{gap:11px}
+
+/* --- catalogue tools --- */
+.catalogTools{gap:11px}
+.resultLine{margin:16px 2px 10px}
+.resultLine b{font-size:13px}
+.resultLine span{font-size:10px;color:var(--mu2)}
+.fitLegend{border-radius:14px;border:1px dashed var(--ln);background:var(--surface);padding:11px 13px;gap:8px}
+.fitLegend>b{font-size:10.5px;color:var(--mu)}
+.fitCallout{border-radius:14px}
+
+/* --- product detail --- */
+.detailVisual{background:radial-gradient(130% 120% at 30% 12%,#fff,color-mix(in srgb,var(--n3) 9%,var(--surface-2)))}
+.detail h1{font-size:23px;letter-spacing:-.03em;line-height:1.1;margin:8px 0 5px}
+.brandRow{font-family:var(--fs-mono);font-size:10px;letter-spacing:.03em}
+.detailNo{font-size:11px;color:var(--mu)}
+.fitBox{border-radius:16px;padding:14px;gap:12px;align-items:start}
+.fitBox.catalog{background:var(--fit-cat-bg);border:1px solid color-mix(in srgb,var(--g) 30%,transparent)}
+.fitBox.check{background:var(--fit-con-bg);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.fitBox.neutral{background:var(--fit-non-bg);border:1px solid var(--ln)}
+.fitIcon{width:42px;height:42px;border-radius:13px;background:var(--surface);font-size:19px;box-shadow:var(--sh-sm)}
+.fitBox b{font-size:13.5px;letter-spacing:-.01em}
+.specGrid{gap:9px}
+.specGrid>div{border-radius:13px;background:var(--surface-2);border:1px solid var(--ln);padding:11px 12px}
+.specGrid small{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mu2)}
+.specGrid b{font-size:12.5px}
+.sourceBox{border-left:3px solid var(--n3);border-radius:0 12px 12px 0;background:var(--surface-2)}
+.sourceBox a{color:var(--n3)}
+.collectionMini{border-radius:13px;border:1px solid var(--ln)}
+.exactCheck{border-radius:15px}
+.stickyActions .btn{min-height:52px}
+
+/* --- order / cart --- */
+.v4CheckoutSteps{gap:8px;margin:2px 0 14px}
+.v4CheckoutSteps div{border-radius:13px;padding:11px;border:1px solid var(--ln);background:var(--surface);box-shadow:var(--sh-sm)}
+.v4CheckoutSteps b{font-size:11px}
+.v4CheckoutSteps .active{border-color:color-mix(in srgb,var(--g) 35%,var(--ln));background:var(--fit-cat-bg)}
+.orderList{border-radius:var(--r-lg)}
+.cartItem{padding:12px}
+.cartImg{border-radius:11px}
+.qty button{border-radius:9px;font-weight:800}
+.summary .total{font-size:17px}
+.total .price{font-size:19px}
+.v3PayNotice{border-radius:15px;background:var(--fit-cat-bg);border:1px solid color-mix(in srgb,var(--g) 28%,transparent);display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center}
+.v3PayNotice>span{width:34px;height:34px;border-radius:11px;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:900}
+.v3PayNotice b{font-size:13px}.v3PayNotice p{margin:2px 0 0;font-size:11px;color:var(--mu)}
+.v3OrderLogin{border-radius:13px}
+.location{border-radius:13px}.location.selected{background:var(--fit-cat-bg);border-color:color-mix(in srgb,var(--g) 35%,var(--ln))}
+
+/* --- orders list --- */
+.v3OrdersHero,.v3TrackHero,.lookupHero{border-radius:var(--r-lg);padding:20px;color:#fff;
+  background:radial-gradient(90% 120% at 100% 0,color-mix(in srgb,var(--n3) 55%,transparent),transparent 48%),linear-gradient(140deg,#08182c,#123258);
+  box-shadow:var(--sh)}
+.v3OrdersHero .sectionKicker,.v3TrackHero .sectionKicker,.lookupHero .sectionKicker{color:#ffd0d3}
+.v3OrdersHero h1,.v3TrackHero h1,.lookupHero h1{font-size:22px;letter-spacing:-.03em;margin:6px 0}
+.v3OrdersHero p,.lookupHero p{color:#cdddef;font-size:12px;margin:0}
+.v3OrderList{display:grid;gap:12px;margin-top:14px}
+.v3OrderCard{border-radius:var(--r-md);box-shadow:var(--sh-sm);padding:15px}
+.orderRef{font-size:11px;font-weight:700;color:var(--mu);letter-spacing:.02em}
+.v3OrderCard h2{font-size:15px;letter-spacing:-.01em;margin:4px 0 2px}
+.v3OrderItems span{background:var(--surface-2);border:1px solid var(--ln);font-size:9.5px;border-radius:99px;padding:5px 9px}
+.v3OrderFoot b{font-size:15px;color:var(--n)}
+.noOrders{border-radius:var(--r-lg);text-align:center;padding:34px 20px}
+
+/* --- track: pay-on-pickup rail --- */
+.v3Timeline{border-radius:var(--r-lg);padding:8px 16px 14px}
+.v3Step{grid-template-columns:34px 1fr;gap:12px;padding:10px 0;position:relative}
+.v3Step::before{content:"";position:absolute;left:16px;top:34px;bottom:-10px;width:2px;background:var(--ln)}
+.v3Step:last-child::before{display:none}
+.v3Step.done::before,.v3Step.current::before{background:var(--g)}
+.v3Step>span{width:34px;height:34px;border:2px solid var(--ln);background:var(--surface-2);color:var(--mu2);font-family:var(--fs-mono);font-weight:700;font-size:12px;z-index:1}
+.v3Step.done>span{background:var(--g);color:#fff;border-color:var(--g)}
+.v3Step.current>span{background:var(--r);color:#fff;border-color:var(--r);box-shadow:0 0 0 5px color-mix(in srgb,var(--r) 22%,transparent)}
+.v3Step b{font-size:13.5px;letter-spacing:-.01em}
+.v3Step small,.v3ApprovalAmount small,.v3TrackHero>div>small{display:block;margin-top:1px}
+.v3Step small{color:var(--mu);font-size:10.5px}
+.v3TrackHero>div>small{color:#cdddef;font-size:10px}
+.v3ApprovalAmount{border-radius:16px;padding:15px;border:1px solid color-mix(in srgb,var(--g) 30%,transparent);background:var(--fit-cat-bg)}
+.v3ApprovalAmount b{font-size:22px;color:var(--n)}
+.lookupCard{border-radius:var(--r-lg);padding:16px}
+.prototypeControl{border-radius:14px;background:var(--surface-2);border:1px dashed var(--ln);padding:13px 14px}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
