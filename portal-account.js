@@ -26,6 +26,9 @@
   const setError = msg => { const el = document.querySelector('.pfErr'); if (el) el.textContent = msg || ''; };
   const busy = (btn, label) => { if (btn) { btn.dataset.label = btn.textContent; btn.textContent = label; btn.disabled = true; } };
   const unbusy = btn => { if (btn && btn.dataset.label) { btn.textContent = btn.dataset.label; btn.disabled = false; } };
+  // After a successful auth, return to wherever the user was headed (e.g. their
+  // order) instead of always dropping onto the dashboard.
+  function afterAuth(msg) { if (msg) say(msg); const dest = P.returnTo; P.returnTo = null; if (dest) render(dest); else account(); }
 
   /* ---- auth screen ---- */
   function authPage(mode) {
@@ -151,13 +154,13 @@
         busy(btn, 'Creating account…');
         const r = await window.PFSB.signUp({ email, password: pass, full_name: name, phone });
         if (!r.session) { say('Account created — check your email to confirm, then sign in.'); authPage('signin'); return; }
-        say('Welcome to PartFit'); account();
+        afterAuth('Welcome to PartFit');
       } else {
         if (!validEmail(email)) return setError('Enter a valid email address.');
         if (!pass) return setError('Enter your password.');
         busy(btn, 'Signing in…');
         await window.PFSB.signIn({ email, password: pass });
-        say('Signed in'); account();
+        afterAuth('Signed in');
       }
     } catch (e) {
       setError(e.message || 'Something went wrong. Please try again.');
@@ -178,13 +181,13 @@
       if (list.some(a => a.email === email)) return setError('An account with that email already exists. Try signing in.');
       list.push({ name, email, phone, ph: obfuscate(pass), createdAt: new Date().toISOString() });
       saveAccounts(list); localStorage.setItem(K.session, email);
-      say('Account created'); account();
+      afterAuth('Account created');
     } else {
       if (!validEmail(email)) return setError('Enter a valid email address.');
       const acc = accounts().find(a => a.email === email);
       if (!acc || acc.ph !== obfuscate(pass)) return setError('Email or password is incorrect.');
       localStorage.setItem(K.session, email);
-      say('Signed in'); account();
+      afterAuth('Signed in');
     }
   }
 
@@ -196,7 +199,9 @@
     const sub = e.target.closest('[data-auth-submit]');
     if (sub) { SB() ? remoteAuth(sub.dataset.authSubmit, sub) : localAuth(sub.dataset.authSubmit); return; }
 
-    if (e.target.closest('[data-demo-customer]')) { sessionStorage.setItem('pfSafeDemo', '1'); say('Demo customer ready'); account(); return; }
+    if (e.target.closest('[data-order-signup]')) { P.returnTo = 'order'; render('signup'); return; }
+
+    if (e.target.closest('[data-demo-customer]')) { sessionStorage.setItem('pfSafeDemo','1'); afterAuth('Demo customer ready'); return; }
 
     if (e.target.closest('[data-signout]')) {
       if (SB()) { try { window.PFSB.signOut(); } catch { } }

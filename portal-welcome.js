@@ -12,6 +12,7 @@
     el=document.createElement('div');
     el.className='pfWelcome';
     el.setAttribute('role','dialog');
+    el.setAttribute('aria-modal','true');
     el.setAttribute('aria-label','Welcome to PartFit');
     el.innerHTML=`
       <div class="wTop">
@@ -49,7 +50,18 @@
       else if(w==='vehicle') render('vehicle');
       /* guest → just dismiss and stay on home */
     });
+    /* focus trap + Escape (Escape = browse as guest) */
+    el.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){e.preventDefault();dismiss();return}
+      if(e.key!=='Tab')return;
+      const f=[...el.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')].filter(n=>!n.disabled&&n.offsetParent!==null);
+      if(!f.length)return;
+      const first=f[0],last=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    });
   }
+  function focusFirst(){ if(el){const b=el.querySelector('.wVehicle')||el.querySelector('button'); if(b) try{b.focus();}catch{} } }
 
   function dismiss(){
     sessionStorage.setItem(SEEN,'1');
@@ -62,6 +74,7 @@
     sessionStorage.removeItem(SEEN);
     el.classList.remove('gone');
     document.body.style.overflow='hidden';  /* lock scroll behind the overlay */
+    focusFirst();
   }
   P.showWelcome=show;
 
@@ -70,5 +83,6 @@
   const deepLinked = (() => { const h = (location.hash || '').slice(1).split(':')[0]; return h && h !== 'home'; })();
   if(!P.signed() && sessionStorage.getItem(SEEN)!=='1' && !deepLinked){
     build();
+    focusFirst();
   }
 })();

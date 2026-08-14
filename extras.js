@@ -89,6 +89,7 @@
 
   function requestPart(){
     const v=S.vehicle||{};
+    const pf=(window.PFV3&&window.PFV3.prefillRequest)||{}; if(window.PFV3) window.PFV3.prefillRequest=null;
     app.innerHTML=appHeader('Request a Part','Vehicle · OE number · photo')+`<main class="page requestPage">
       <section class="vehicleIntro requestIntro">
         <span class="sectionKicker">PARTFIT ASSIST</span>
@@ -96,7 +97,7 @@
         <p>If the exact reference is not in the catalogue yet, send the details below. We’ll use the vehicle, OE/part number and any photo you have to identify the right item.</p>
       </section>
       <section class="card form requestForm">
-        <div class="field"><label>Part needed *</label><input id="reqPart" placeholder="e.g. front brake pads, oil filter, 6PK belt"></div>
+        <div class="field"><label>Part needed *</label><input id="reqPart" value="${safe(pf.part||'')}" placeholder="e.g. front brake pads, oil filter, 6PK belt"></div>
         <div class="grid2">
           <div class="field"><label>Make</label><input id="reqMake" value="${safe(v.make||'')}" placeholder="Toyota"></div>
           <div class="field"><label>Model</label><input id="reqModel" value="${safe(v.model||'')}" placeholder="Corolla"></div>
@@ -132,7 +133,7 @@
     e.preventDefault();
     const val=id=>(document.getElementById(id)?.value||'').trim();
     const part=val('reqPart');
-    if(!part){say('Tell us which part you need');return}
+    if(!part){const el=document.getElementById('reqPart');if(typeof fieldError==='function'){fieldError(el,'Tell us which part you need');say('Please check the highlighted field');}else say('Tell us which part you need');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}return}
     const make=val('reqMake'), model=val('reqModel'), year=val('reqYear'), engine=val('reqEngine');
     const oe=val('reqOE'), vin=val('reqVIN'), qty=val('reqQty')||'1', note=val('reqNote');
     const msg=[

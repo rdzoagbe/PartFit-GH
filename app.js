@@ -31,6 +31,40 @@ function say(t){
   say._t=setTimeout(()=>toast.classList.remove('show'),1800);
 }
 
+/* ---- form validation + phone formatting (shared, global) ---- */
+function fieldError(input,msg){
+  if(!input)return;
+  input.classList.add('invalid');
+  input.setAttribute('aria-invalid','true');
+  const host=input.closest('.field')||input.parentElement;
+  let e=host&&host.querySelector('.fieldErr');
+  if(!e&&host){e=document.createElement('small');e.className='fieldErr';host.appendChild(e);}
+  if(e)e.textContent=msg;
+}
+function clearFieldError(input){
+  if(!input)return;
+  input.classList.remove('invalid');
+  input.removeAttribute('aria-invalid');
+  const host=input.closest('.field')||input.parentElement;
+  const e=host&&host.querySelector('.fieldErr');
+  if(e)e.remove();
+}
+function formatGhPhone(v){
+  let s=String(v||'').replace(/[^\d+]/g,'');
+  if(s.startsWith('00'))s='+'+s.slice(2);
+  if(/^0\d{8,10}$/.test(s))s='+233'+s.slice(1);   // local 0xx… → +233
+  return s;
+}
+function validPhone(v){ return formatGhPhone(v).replace(/\D/g,'').length>=9; }
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
+// Clear a field's error as soon as the user starts correcting it, and
+// light-format phone fields on blur.
+document.addEventListener('input',e=>{ if(e.target.matches&&e.target.matches('input,select,textarea')) clearFieldError(e.target); });
+document.addEventListener('blur',e=>{
+  const t=e.target;
+  if(t&&t.matches&&t.matches('input[inputmode="tel"],input[type="tel"]')&&t.value.trim()){ t.value=formatGhPhone(t.value); }
+},true);
+
 function appHeader(title='PartFit Ghana', sub='Right Part. Right Car.'){
   return `<header class="top">
     <button class="brandMark" data-page="home" aria-label="Home"><span>PF</span><small>GH</small></button>
@@ -69,7 +103,7 @@ function fitPill(p){
 }
 
 function productCard(p){
-  return `<article class="card product" data-product="${p.id}">
+  return `<article class="card product" data-product="${p.id}" role="link" tabindex="0" aria-label="${safe(p.name)}, ${money(p.price)}. View details.">
     <div class="productImg">${image(p.img,p.name)}</div>
     <div class="productInfo">
       <div class="eyebrow">${safe(p.brand)} · ${safe(p.short)}</div>
@@ -183,11 +217,27 @@ function fillModels(){
   d.innerHTML=cars[m.value].map(x=>`<option ${wanted===x?'selected':''}>${x}</option>`).join('');
 }
 
+const alnum=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function partHaystack(p){
+  const specNums=(p.specs||[]).map(s=>s[1]).join(' ');
+  return {
+    text:[p.name,p.short,p.brand,p.cat,p.summary,specNums,(p.fitBrands||[]).join(' '),(p.fitModels||[]).join(' ')].join(' ').toLowerCase(),
+    code:alnum([p.short,p.name,specNums].join(' '))
+  };
+}
 function filteredParts(){
   let list=S.cat==='All'?parts:parts.filter(p=>p.cat===S.cat);
-  const q=S.query.trim().toLowerCase();
-  if(q) list=list.filter(p=>[p.name,p.short,p.brand,p.cat,p.summary].join(' ').toLowerCase().includes(q));
-  return list;
+  const raw=S.query.trim().toLowerCase();
+  if(!raw) return list;
+  const tokens=raw.split(/\s+/).filter(Boolean);
+  const codeQuery=alnum(raw);
+  return list.filter(p=>{
+    const h=partHaystack(p);
+    // Whole-query part-number match (e.g. "1987 435 002" -> "1987435002")
+    if(codeQuery.length>=4 && h.code.includes(codeQuery)) return true;
+    // Every word must appear somewhere (text) or as a part-number fragment
+    return tokens.every(t=>h.text.includes(t)||(alnum(t).length>=3&&h.code.includes(alnum(t))));
+  });
 }
 
 function catalogue(){
@@ -199,7 +249,7 @@ function catalogue(){
     </div>
     ${S.vehicle?`<div class="selectedCar compact"><div><span class="okDot">✓</span><div><b>Checking against</b><small>${safe(vehicleLabel())}</small></div></div><button data-page="vehicle">Change</button></div>`:`<div class="fitCallout"><b>Want fitment guidance?</b><span>Select your car first.</span><button data-page="vehicle">Select vehicle</button></div>`}
     <div class="resultLine"><b>${list.length} products</b><span>Prices shown are current demo catalogue values.</span></div>
-    <section class="products catalogueGrid">${list.length?list.map(productCard).join(''):'<div class="card empty"><h2>No results</h2><p>Try another part number or category.</p><button class="btn red" data-clear-search>Clear filters</button></div>'}</section>
+    <section class="products catalogueGrid">${list.length?list.map(productCard).join(''):`<div class="card empty noResults"><div class="emptyIcon">🔍</div><h2>No parts matched${S.query?` “${safe(S.query)}”`:''}</h2><p>We can still source it. Send us the part number or a photo and we'll check availability and fitment for you.</p><div class="noResultsCta"><button class="btn red" data-request-part>Request this part</button><button class="btn outlineNavy" data-clear-search>Clear filters</button></div></div>`}</section>
   </main>${nav('catalogue')}`;
 }
 
@@ -237,8 +287,8 @@ function order(){
     <section class="card orderList">
       ${S.cart.map(i=>{const p=parts.find(x=>x.id===i.id);return `<div class="cartItem">
         <div class="cartImg">${image(p.img,p.name)}</div>
-        <div><b>${safe(p.name)}</b><small>${safe(p.short)}</small><div class="qty"><button data-qty="-1" data-id="${p.id}">−</button><b>${i.qty}</b><button data-qty="1" data-id="${p.id}">+</button></div></div>
-        <strong>${money(p.price*i.qty)}</strong>
+        <div><b>${safe(p.name)}</b><small>${safe(p.short)}</small><div class="qty"><button data-qty="-1" data-id="${p.id}" aria-label="Decrease quantity">−</button><b>${i.qty}</b><button data-qty="1" data-id="${p.id}" aria-label="Increase quantity" ${i.qty>=qtyCap(p)?'disabled':''}>+</button></div></div>
+        <div class="cartItemRight"><strong>${money(p.price*i.qty)}</strong><button class="cartRemove" data-remove="${p.id}" aria-label="Remove ${safe(p.name)} from order">Remove</button></div>
       </div>`}).join('')}
     </section>
     <section class="sec card summary">
@@ -265,12 +315,24 @@ function order(){
   </main>${nav('order')}`;
 }
 
+const qtyCap=p=>Math.max(1,Math.min(Number(p?.stock)||10,10));
+function updateCartBadge(){document.querySelectorAll('.cartBtn b').forEach(b=>b.textContent=cartCount());}
+function cartPeek(p){
+  const el=document.getElementById('cartPeek');if(!el)return;
+  const n=cartCount();
+  el.innerHTML=`<div class="cpImg">${image(p.img,p.name)}</div><div class="cpText"><b>Added to order</b><small>${safe(p.name)}</small></div><button class="cpView" data-page="order">View order (${n})</button>`;
+  el.hidden=false;el.classList.add('show');
+  clearTimeout(cartPeek._t);cartPeek._t=setTimeout(()=>{el.classList.remove('show');},3200);
+}
 function add(id,toOrder=false){
+  const p=parts.find(x=>x.id===id);if(!p)return;
+  const cap=qtyCap(p);
   let i=S.cart.find(x=>x.id===id);
-  i?i.qty++:S.cart.push({id,qty:1});
+  if(i){ if(i.qty>=cap){say(`Only ${cap} available to reserve`);return} i.qty++; } else S.cart.push({id,qty:1});
   save();
-  say('Added to order');
-  toOrder?order():catalogue();
+  if(toOrder){order();return}
+  updateCartBadge();
+  cartPeek(p);
 }
 
 function whatsapp(text){
@@ -307,11 +369,16 @@ document.addEventListener('change',e=>{
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter' && e.target.id==='homeSearch') doSearch('homeSearch');
   if(e.key==='Enter' && e.target.id==='catalogSearch') doSearch('catalogSearch');
+  // Keyboard-operable product cards (role="link")
+  if((e.key==='Enter'||e.key===' ')){
+    const card=e.target.closest&&e.target.closest('.card.product[data-product]');
+    if(card&&!e.target.closest('[data-add]')){e.preventDefault();product(card.dataset.product);}
+  }
 });
 
 document.addEventListener('click',e=>{
   const pg=e.target.closest('[data-page]');
-  if(pg){render(pg.dataset.page);return}
+  if(pg){const cp=document.getElementById('cartPeek');if(cp){cp.classList.remove('show');cp.hidden=true;}render(pg.dataset.page);return}
 
   const cat=e.target.closest('[data-cat]');
   if(cat){S.cat=cat.dataset.cat==='All Parts'?'All':cat.dataset.cat;S.query='';catalogue();return}
@@ -325,9 +392,17 @@ document.addEventListener('click',e=>{
   const q=e.target.closest('[data-qty]');
   if(q){
     const i=S.cart.find(x=>x.id===q.dataset.id);
-    if(i){i.qty+=Number(q.dataset.qty);if(i.qty<1)S.cart=S.cart.filter(x=>x.id!==q.dataset.id);save();order()}
+    if(i){
+      const delta=Number(q.dataset.qty);
+      const p=parts.find(x=>x.id===q.dataset.id);
+      if(delta>0&&i.qty>=qtyCap(p)){say(`Only ${qtyCap(p)} available to reserve`);return}
+      i.qty+=delta;if(i.qty<1)S.cart=S.cart.filter(x=>x.id!==q.dataset.id);save();order();
+    }
     return;
   }
+
+  const rm=e.target.closest('[data-remove]');
+  if(rm){S.cart=S.cart.filter(x=>x.id!==rm.dataset.remove);save();say('Removed from order');order();return}
 
   if(e.target.closest('[data-save-car]')){
     S.vehicle={
@@ -352,6 +427,11 @@ document.addEventListener('click',e=>{
   }
 
   if(e.target.closest('[data-clear-search]')){S.query='';S.cat='All';catalogue();return}
+
+  if(e.target.closest('[data-request-part]')){
+    if(window.PFV3) window.PFV3.prefillRequest={part:S.query||''};
+    render('request');return;
+  }
 
   if(e.target.closest('[data-help]')){
     whatsapp('Hello PartFit Ghana, I need help finding the correct car part'+(S.vehicle?' for my '+vehicleLabel():'.')+' Please assist me.');
