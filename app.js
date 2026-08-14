@@ -216,7 +216,7 @@ function product(id){
         <div class="detailNo">Part / Ref: <b>${safe(p.short)}</b></div>
         <div class="detailPrice">${money(p.price)}</div>
         <div class="fitBox ${f.cls}">
-          <div class="fitIcon">${f.icon}</div><div><b>${safe(f.text)}</b><p>${safe(vehicleLabel())}</p><small>${safe(p.badge)} · ${safe(p.origin)}</small></div>
+          <div class="fitIcon">${f.icon}</div><div><b>${safe(f.text)}</b><p>${safe(vehicleLabel())}</p><small>${safe(p.badge)} · ${safe(p.origin)}</small>${S.vehicle?`<button class="fitChangeCar" data-page="vehicle">Change vehicle</button>`:`<button class="btn red fitPickCar" data-page="vehicle">Select my car</button>`}</div>
         </div>
         <div class="specGrid">${p.specs.map(s=>`<div><small>${safe(s[0])}</small><b>${safe(s[1])}</b></div>`).join('')}</div>
         <section class="description"><h2>Product information</h2><p>${safe(p.summary)}</p></section>
