@@ -11,7 +11,10 @@
     app.innerHTML=appHeader('My Orders','Approval · pickup · history')+`<main class="page"><section class="v3OrdersHero"><div><span class="sectionKicker">ORDER CENTRE</span><h1>From request to collection.</h1><p>PartFit checks fitment and stock first. When approved, we confirm the final amount and you pay when collecting.</p></div></section><section class="v3OrderList">${body}</section>${P.footer()}</main>${nav('orders')}`;
   }
   function renderList(state){
-    if(state==='loading'){shell(`<div class="card noOrders"><span>⏳</span><h2>Loading your orders…</h2></div>`);return}
+    if(state==='loading'){
+      const sk=`<article class="card v3OrderCard skWrap"><span class="sk skLine" style="width:38%;height:11px"></span><span class="sk skLine" style="width:70%;height:17px;margin-top:10px"></span><span class="sk skLine" style="width:92%;height:11px;margin-top:12px"></span><span class="sk skLine" style="width:48%;height:13px;margin-top:14px"></span></article>`;
+      shell(sk+sk+sk);return;
+    }
     if(state&&state.error){shell(`<div class="card noOrders"><span>⚠️</span><h2>Couldn’t load orders</h2><p>${P.esc(state.error)}</p><button class="btn outlineNavy" data-page="orders">Try again</button></div>`);return}
     const list=state||[];
     shell(list.length?list.map(orderCard).join(''):`<div class="card noOrders"><span>📦</span><h2>No orders yet</h2><p>Submit an order or preview the flow.</p><button class="btn outlineNavy" data-v3-demo>View Demo Tracking</button></div>`);

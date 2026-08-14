@@ -73,14 +73,15 @@
     const err = orders && orders.error;
     const list = Array.isArray(orders) ? orders : [];
     shownCars = Array.isArray(cars) ? cars : [];
-    const stat = v => loading ? '·' : v;
+    const stat = v => loading ? '<span class="sk skLine" style="display:inline-block;width:28px;height:22px;border-radius:6px;vertical-align:-4px"></span>' : v;
+    const skRow = `<div class="skRow skWrap"><span class="sk" style="width:38px;height:38px;border-radius:12px;flex:none"></span><span class="mid"><span class="sk skLine" style="width:62%"></span><span class="sk skLine" style="width:40%;height:10px;margin-top:7px"></span></span></div>`;
     const ordersPanel = loading
-      ? `<div class="empty"><p>Loading your orders…</p></div>`
+      ? skRow + skRow
       : err
         ? `<div class="empty"><div class="ico">⚠️</div><p>${P.esc(err)}</p><button class="btn outlineNavy" data-page="account">Retry</button></div>`
         : (list.length ? list.slice(0, 3).map(orderRow).join('') : `<div class="empty"><div class="ico">🧾</div><p>No orders yet.</p><button class="btn red" data-page="catalogue">Browse parts</button></div>`);
     const garagePanel = (orders === 'loading' && SB())
-      ? `<div class="empty"><p>Loading…</p></div>`
+      ? skRow
       : (shownCars.length ? shownCars.map(carRow).join('') : `<div class="empty"><div class="ico">🚗</div><p>No vehicles saved yet.</p><button class="btn outlineNavy" data-page="vehicle">Select my car</button></div>`);
     app.innerHTML = appHeader('My PartFit', 'Profile · garage · orders') + `<main class="page">
       <section class="pfDashHero">

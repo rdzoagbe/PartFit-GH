@@ -8,7 +8,8 @@
     app.innerHTML=appHeader('Track an Order','Order reference · status')+`<main class="page"><section class="lookupHero"><span class="sectionKicker">TRACKING</span><h1>Where is my order?</h1><p>Enter your PartFit reference.</p></section><section class="card lookupCard"><div class="field"><label>Order reference</label><input id="v3TrackRef" placeholder="PF-260814-A1B2C3"></div><button class="btn red full" data-v3-track-submit>Track Order</button><button class="textAction" data-v3-demo>View demo tracking</button></section>${P.footer()}</main>${nav('orders')}`;
   }
   function loading(id){
-    app.innerHTML=appHeader('Track Order',id)+`<main class="page"><section class="v3TrackHero"><div><span class="sectionKicker">ORDER STATUS</span><h1>${P.esc(id)}</h1><p>Loading…</p></div></section>${P.footer()}</main>${nav('orders')}`;
+    const skStep=`<div class="skRow skWrap"><span class="sk" style="width:34px;height:34px;border-radius:50%;flex:none"></span><span class="mid"><span class="sk skLine" style="width:55%"></span><span class="sk skLine" style="width:30%;height:10px;margin-top:6px"></span></span></div>`;
+    app.innerHTML=appHeader('Track Order',id)+`<main class="page"><section class="v3TrackHero"><div><span class="sectionKicker">ORDER STATUS</span><h1>${P.esc(id)}</h1><p>Loading…</p></div></section><section class="card v3Timeline">${skStep+skStep+skStep+skStep+skStep}</section>${P.footer()}</main>${nav('orders')}`;
   }
   function errorState(id,msg){
     app.innerHTML=appHeader('Track Order',id)+`<main class="page"><section class="lookupHero"><span class="sectionKicker">TRACKING</span><h1>Couldn’t load that order</h1><p>${P.esc(msg||'')}</p></section><section class="card lookupCard"><button class="btn red full" data-v3-track="${P.esc(id)}">Try again</button><button class="textAction" data-page="orders">Back to my orders</button></section>${P.footer()}</main>${nav('orders')}`;

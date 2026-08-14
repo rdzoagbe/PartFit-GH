@@ -605,3 +605,15 @@ h1,h2,h3{letter-spacing:-.02em}
 .pfConfirmCta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
 .pfConfirmNote{text-align:center;color:var(--mu2);font-size:11px;margin:14px 0 0}
 @media(max-width:460px){.pfConfirmCta{grid-template-columns:1fr}}
+
+/* ==========================================================================
+   LOADING SKELETONS (shimmer placeholders for async screens)
+   ========================================================================== */
+@keyframes skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk{background:linear-gradient(90deg,color-mix(in srgb,var(--ln) 60%,var(--surface)) 25%,var(--surface-2) 50%,color-mix(in srgb,var(--ln) 60%,var(--surface)) 75%);background-size:200% 100%;animation:skShimmer 1.3s linear infinite;border-radius:8px;display:block}
+.skLine{height:12px}
+.skWrap{pointer-events:none;user-select:none}
+.skRow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--ln)}
+.skRow:first-child{border-top:0}
+.skRow .mid{flex:1;min-width:0}
+@media(prefers-reduced-motion:reduce){.sk{animation:none;opacity:.65}}
