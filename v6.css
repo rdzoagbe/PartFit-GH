@@ -72,16 +72,16 @@ h1,h2,h3{letter-spacing:-.02em}
   min-height:64px;
 }
 .brandMark{
-  width:44px;height:44px;border-radius:14px;
+  height:44px;width:auto;border-radius:12px;
   background:linear-gradient(155deg,#ffffff,#eef3f9);
   border:1px solid color-mix(in srgb,var(--n) 12%,transparent);
   box-shadow:0 6px 16px rgba(10,31,61,.12);
-  display:grid;place-items:center;padding:0;overflow:hidden;
+  display:grid;place-items:center;padding:0 9px;overflow:hidden;
 }
-.brandMark .brandLogo{width:30px;height:30px;display:block}
+.brandMark .brandLogo{height:30px;width:auto;display:block;object-fit:contain}
 /* Footer brand lockup (logo on a light chip for contrast on the navy footer) */
-.v3FootBrand{display:flex;align-items:center;gap:11px;margin-bottom:8px}
-.v3FootMark{width:42px;height:42px;flex:none;background:linear-gradient(155deg,#ffffff,#eaeff6);border-radius:12px;padding:5px;box-shadow:0 5px 14px rgba(0,0,0,.28)}
+.v3FootBrand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.v3FootMark{box-sizing:border-box;height:54px;width:auto;flex:none;background:linear-gradient(155deg,#ffffff,#eaeff6);border-radius:12px;padding:7px 11px;box-shadow:0 5px 14px rgba(0,0,0,.28);object-fit:contain}
 .v3FootWord{display:flex;flex-direction:column;line-height:1;color:#fff;font-size:22px;font-weight:950;letter-spacing:-.02em}
 .v3FootWord b{margin-top:4px;font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#8fb4e6}
 .title{font-size:16px;font-weight:900}
@@ -417,7 +417,7 @@ h1,h2,h3{letter-spacing:-.02em}
 .pfWelcome .wTop{flex:none;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 0;display:flex;align-items:center;gap:10px}
 .pfWelcome .wMark{display:flex;flex-direction:row;align-items:center;gap:10px;line-height:1}
 .pfWelcome .wMark .wWord{display:flex;flex-direction:column}
-.pfWelcome .wMark .wLogo{box-sizing:border-box;width:42px;height:42px;flex:none;background:linear-gradient(155deg,#fff,#eaeff6);border-radius:11px;padding:6px;box-shadow:0 5px 14px rgba(0,0,0,.32)}
+.pfWelcome .wMark .wLogo{box-sizing:border-box;height:50px;width:auto;flex:none;background:linear-gradient(155deg,#fff,#eaeff6);border-radius:11px;padding:7px 10px;box-shadow:0 5px 14px rgba(0,0,0,.32);object-fit:contain}
 .pfWelcome .wMark b{font-size:20px;font-weight:900;letter-spacing:-.045em;color:#fff}
 .pfWelcome .wMark b span{color:#ff5a63}
 .pfWelcome .wMark .tb{margin-top:3px;height:3px;width:46px;border-radius:2px;background:linear-gradient(90deg,var(--r) 0 33%,var(--gold) 33% 66%,var(--g) 66% 100%)}

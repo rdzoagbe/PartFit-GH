@@ -16,7 +16,7 @@
     el.setAttribute('aria-label','Welcome to PartFit');
     el.innerHTML=`
       <div class="wTop">
-        <div class="wMark"><img class="wLogo" src="./logo.svg" alt="" width="38" height="38"><span class="wWord"><b>Part<span>Fit</span></b><span class="tb"></span></span></div>
+        <div class="wMark"><img class="wLogo" src="./logo.svg" alt="" width="70" height="40"><span class="wWord"><b>Part<span>Fit</span></b><span class="tb"></span></span></div>
         <button class="wSkip" data-w="signin">Sign in</button>
       </div>
       <div class="wBody">
