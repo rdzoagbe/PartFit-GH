@@ -107,6 +107,21 @@ h1,h2,h3{letter-spacing:-.02em}
   width:26px;height:3px;border-radius:99px;background:var(--r);
 }
 
+/* ---------- Shell alignment: header + footer track the content column ----------
+   .page is a centred column (width:min(100%,1040px); padding:16px). The header
+   sits outside .page and the footer breaks out of it, so their edges must be
+   inset to the same column — otherwise the brand/actions drift to the screen
+   edges while the cards stay centred. The calc self-adjusts at every width:
+   below the cap it resolves to the plain 16px gutter; above it, it adds the
+   centring margin so the header lines up with the cards. The footer keeps its
+   full-bleed-to-page-box look via a negative margin equal to that gutter. */
+:root{--shell-max:1040px;--gutter:16px}
+.top,.top.v3Top{
+  padding-left:calc((100% - min(100%,var(--shell-max)))/2 + var(--gutter));
+  padding-right:calc((100% - min(100%,var(--shell-max)))/2 + var(--gutter));
+}
+.v3Footer{margin:40px calc(-1 * var(--gutter)) calc(-1 * var(--gutter))}
+
 /* ---------- Desktop top-nav (mobile keeps the bottom tab bar) ---------- */
 .v3Nav{display:none}
 @media(min-width:860px){
