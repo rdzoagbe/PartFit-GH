@@ -111,7 +111,7 @@
         <div class="field"><label>Quantity</label><select id="reqQty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select></div>
         <div class="field"><label>Notes</label><textarea id="reqNote" placeholder="Front/rear, dimensions, brand preference, urgency, anything printed on the old part…"></textarea></div>
         <div class="photoHelp"><span>📷</span><div><b>Have a photo?</b><p>After WhatsApp opens, attach clear photos of the old part, box label or VIN plate. This reduces identification mistakes.</p></div></div>
-        <button class="btn wa full big" data-request-submit>Send Request on WhatsApp</button>
+        ${honeypotField()}<button class="btn wa full big" data-request-submit>Send Request on WhatsApp</button>
         <p class="secureNote">No account required. The form is turned into a WhatsApp message only when you tap Send.</p>
       </section>
       <section class="sec card requestTips">
@@ -131,6 +131,8 @@
     const btn=e.target.closest('[data-request-submit]');
     if(!btn) return;
     e.preventDefault();
+    if(typeof honeypotTripped==='function'&&honeypotTripped()){say('Request sent');return}
+    if(typeof submitAllowed==='function'&&!submitAllowed('request')){say('Please wait a moment before sending again');return}
     const val=id=>(document.getElementById(id)?.value||'').trim();
     const part=val('reqPart');
     if(!part){const el=document.getElementById('reqPart');if(typeof fieldError==='function'){fieldError(el,'Tell us which part you need');say('Please check the highlighted field');}else say('Tell us which part you need');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}return}

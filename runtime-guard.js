@@ -20,4 +20,25 @@
     say('Test mode: WhatsApp message copied. Add the real business number before launch.');
     console.info('PartFit WhatsApp test message:',text);
   };
+
+  // ---- Client-side error monitoring hook ----
+  // No external calls in demo (CSP + no endpoint): captured errors go into a
+  // capped in-memory ring buffer and an optional PFDIAG.report(entry) sink that
+  // a real monitoring backend can plug into later. Inspect via window.PFDIAG.
+  const DIAG = window.PFDIAG = window.PFDIAG || { errors: [], max: 50, report: null };
+  function capture(kind, detail){
+    const entry = { kind, at: new Date().toISOString(), page: location.hash || '#home', detail: String(detail == null ? '' : detail).slice(0, 500) };
+    DIAG.errors.push(entry);
+    while (DIAG.errors.length > DIAG.max) DIAG.errors.shift();
+    try { if (typeof DIAG.report === 'function') DIAG.report(entry); } catch { /* a broken reporter must never throw */ }
+  }
+  // Image load failures are handled above; ignore them here.
+  window.addEventListener('error', e => {
+    if (e && e.target && e.target.tagName === 'IMG') return;
+    capture('error', (e && (e.message || (e.error && e.error.message))) || 'script error');
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const r = e && e.reason;
+    capture('unhandledrejection', (r && (r.message || r)) || 'unhandled promise rejection');
+  });
 })();
