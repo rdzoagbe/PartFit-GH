@@ -57,6 +57,15 @@ function formatGhPhone(v){
 }
 function validPhone(v){ return formatGhPhone(v).replace(/\D/g,'').length>=9; }
 function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
+
+/* ---- abuse guards for public WhatsApp-handoff forms (contact, part request) ----
+   A honeypot field (hidden from people, often auto-filled by bots) and a
+   per-key submit cooldown to blunt rapid repeat submits. Server-side limits
+   still apply to auth. */
+function honeypotField(){ return '<input class="pf-hp" type="text" name="pf_company" tabindex="-1" autocomplete="off" aria-hidden="true">'; }
+function honeypotTripped(scope){ const el=(scope||document).querySelector('.pf-hp'); return !!(el&&el.value.trim()); }
+const _pfCooldowns={};
+function submitAllowed(key,ms=4000){ const now=Date.now(); if(now-(_pfCooldowns[key]||0)<ms) return false; _pfCooldowns[key]=now; return true; }
 // Clear a field's error as soon as the user starts correcting it, and
 // light-format phone fields on blur.
 document.addEventListener('input',e=>{ if(e.target.matches&&e.target.matches('input,select,textarea')) clearFieldError(e.target); });
