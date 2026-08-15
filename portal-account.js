@@ -24,6 +24,24 @@
   const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   const isOpen = o => o.status ? !window.PFSB.CLOSED.includes(o.status) : o.stage < 4;
   const setError = msg => { const el = document.querySelector('.pfErr'); if (el) el.textContent = msg || ''; };
+  // Translate raw backend auth errors (which also surface as a console 400)
+  // into a clear, actionable message for the customer.
+  function friendlyAuthError(e, mode) {
+    const m = ((e && e.message) || '').toLowerCase();
+    if (/invalid login|invalid[_ ]grant|invalid credentials/.test(m))
+      return mode === 'signin'
+        ? 'Email or password is incorrect. New to PartFit? Use “Create account” below.'
+        : 'Those details did not match. Please check and try again.';
+    if (/email not confirmed|email_not_confirmed|not confirmed/.test(m))
+      return 'Please confirm your email from the link we sent, then sign in.';
+    if (/already registered|already exists|user already/.test(m))
+      return 'An account with that email already exists. Try signing in instead.';
+    if (/rate|too many|429/.test(m))
+      return 'Too many attempts. Please wait a moment and try again.';
+    if (/failed to fetch|networkerror|network request failed/.test(m))
+      return 'Could not reach the server. Check your connection and try again.';
+    return (e && e.message) || 'Something went wrong. Please try again.';
+  }
   const busy = (btn, label) => { if (btn) { btn.dataset.label = btn.textContent; btn.textContent = label; btn.disabled = true; } };
   const unbusy = btn => { if (btn && btn.dataset.label) { btn.textContent = btn.dataset.label; btn.disabled = false; } };
   // After a successful auth, return to wherever the user was headed (e.g. their
@@ -163,7 +181,7 @@
         afterAuth('Signed in');
       }
     } catch (e) {
-      setError(e.message || 'Something went wrong. Please try again.');
+      setError(friendlyAuthError(e, mode));
     } finally { unbusy(btn); }
   }
 

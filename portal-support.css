@@ -1,1 +1,13 @@
-.faqItem{margin:8px 0;border:1px solid var(--ln);border-radius:12px;background:#fff}.faqItem>button{width:100%;padding:12px;border:0;background:#fff;text-align:left}.faqAnswer{display:none;padding:12px;color:var(--mu)}.faqItem.open .faqAnswer{display:block}.policyBody{padding:16px}.draftBadge{display:inline-block;padding:6px 9px;border-radius:99px;background:#fff1c7}
+.faqItem{margin:8px 0;border:1px solid var(--ln);border-radius:12px;background:#fff}.faqItem>button{width:100%;padding:12px;border:0;background:#fff;text-align:left}.faqAnswer{display:none;padding:12px;color:var(--mu)}.faqItem.open .faqAnswer{display:block}.policyBody{padding:16px}.draftBadge{display:inline-block;padding:6px 9px;border-radius:99px;background:#fff1c7;font-size:11px;font-weight:800;color:#8a5d00}
+.policyPage .policyHero{margin:14px 0 4px;padding:4px 2px}
+.policyPage .policyHero h1{font-size:26px;letter-spacing:-.4px;margin:0 0 8px}
+.policyPage .policyHero p{color:var(--mu);margin:0 0 12px;max-width:60ch;line-height:1.55}
+.policyPage .policyBody{margin-top:12px}
+.policyPage .policyBody h2{font-size:15px;margin:0 0 8px}
+.policyPage .policyBody p{margin:0 0 8px;color:var(--tx);line-height:1.55}
+.policyPage .policyBody p:last-child{margin-bottom:0}
+.policyPage .policyBody ul{margin:0;padding-left:18px;color:var(--tx);line-height:1.55}
+.policyPage .policyBody li{margin:0 0 6px}
+.policyPage .policyBody li:last-child{margin-bottom:0}
+.policyPage .policyNote{padding:14px 16px;background:#f6f8fb;border-style:dashed}
+.policyPage .policyNote p{margin:0;color:var(--mu);font-size:12.5px;line-height:1.5}
