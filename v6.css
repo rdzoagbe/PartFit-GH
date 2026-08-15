@@ -107,6 +107,22 @@ h1,h2,h3{letter-spacing:-.02em}
   width:26px;height:3px;border-radius:99px;background:var(--r);
 }
 
+/* ---------- Desktop top-nav (mobile keeps the bottom tab bar) ---------- */
+.v3Nav{display:none}
+@media(min-width:860px){
+  .v3Nav{display:flex;gap:2px;margin-right:8px}
+  .v3Nav button{border:0;background:none;color:var(--n);font-weight:800;font-size:13.5px;
+    padding:9px 13px;border-radius:11px;cursor:pointer;
+    transition:background .15s ease,color .15s ease;font-family:inherit}
+  .v3Nav button:hover{background:#eef3f9}
+  .v3Nav button.on{color:var(--r);background:color-mix(in srgb,var(--r) 9%,transparent)}
+  .bottom{display:none}
+  .shell{padding-bottom:0}
+  .installBtn{bottom:20px}
+  .toast{bottom:26px}
+  .cartPeek{bottom:26px}
+}
+
 /* ---------- Buttons ---------- */
 .btn{
   border-radius:14px;min-height:48px;font-weight:800;letter-spacing:-.01em;

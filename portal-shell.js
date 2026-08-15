@@ -21,8 +21,15 @@
   P.setHash=(page,arg='')=>{const map={home:'home',vehicle:'vehicle',catalogue:'parts',request:'request',order:'cart',orders:'orders',account:'account',login:'login',signup:'signup',track:'track',contact:'contact',faq:'faq',privacy:'privacy',terms:'terms',returns:'returns',delivery:'delivery',fitment:'fitment',staff:'staff',product:'product',confirmation:'confirmation'};history.replaceState(null,'','#'+(map[page]||'home')+(arg?':'+encodeURIComponent(arg):''))};
 
   function accountTop(){const p=P.profile();return P.signed()?`<button class="v3AccountTop" data-page="account"><b>${P.initials(p.name)}</b><small>Account</small></button>`:`<button class="v3AccountTop" data-page="login"><b>👤</b><small>Sign in</small></button>`}
+  // Map the current page to the primary-nav root it belongs under, mirroring
+  // the active tab the bottom nav shows, so the desktop header highlights the
+  // same section.
+  const NAV_ROOT={home:'home',vehicle:'home',catalogue:'catalogue',product:'catalogue',request:'request',order:'orders',orders:'orders',track:'orders',confirmation:'orders',account:'account',login:'account',signup:'account',staff:'account',faq:'account',contact:'account',privacy:'account',terms:'account',returns:'account',delivery:'account',fitment:'account'};
   appHeader=function(title='PartFit Ghana',sub='Right Part. Right Car.'){
-    return `<header class="top v3Top"><button class="brandMark" data-page="home"><span>PF</span><small>GH</small></button><div class="title">${P.esc(title)}<small>${P.esc(sub)}</small></div><div class="v3Desktop"><button data-page="catalogue">Parts</button><button data-page="request">Request</button></div><div class="grow"></div><button class="topAction" data-help>WA</button><button class="cartBtn" data-page="order">🛒 <b>${cartCount()}</b></button>${accountTop()}</header>`;
+    const cur=NAV_ROOT[P.cur]||'';
+    const items=[['home','Home'],['catalogue','Parts'],['request','Request'],['orders','Orders']];
+    const topNav=`<nav class="v3Nav" aria-label="Primary">${items.map(x=>`<button class="${cur===x[0]?'on':''}" data-page="${x[0]}">${x[1]}</button>`).join('')}</nav>`;
+    return `<header class="top v3Top"><button class="brandMark" data-page="home"><span>PF</span><small>GH</small></button><div class="title">${P.esc(title)}<small>${P.esc(sub)}</small></div><div class="grow"></div>${topNav}<button class="topAction" data-help>WA</button><button class="cartBtn" data-page="order">🛒 <b>${cartCount()}</b></button>${accountTop()}</header>`;
   };
   nav=function(active){const a=active==='order'?'orders':active,n=[['home','⌂','Home'],['catalogue','▦','Parts'],['request','⌕','Request'],['orders','◎','Orders'],['account','👤','Account']];return `<nav class="bottom">${n.map(x=>`<button class="${a===x[0]?'on':''}" data-page="${x[0]}"><span>${x[1]}</span>${x[2]}</button>`).join('')}</nav>`};
 })();
