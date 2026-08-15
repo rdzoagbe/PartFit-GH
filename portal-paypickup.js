@@ -5,9 +5,15 @@
   const makeId=()=>`PF-${new Date().toISOString().slice(2,10).replaceAll('-','')}-${Math.floor(100+Math.random()*900)}`;
   function saveRequest(){
     if(!S.cart.length)return null;
-    const name=(document.getElementById('name')?.value||'').trim();
-    const phone=(document.getElementById('phone')?.value||'').trim();
-    if(!name||!phone){say('Enter your name and phone');return null}
+    const nameEl=document.getElementById('name'), phoneEl=document.getElementById('phone');
+    const name=(nameEl?.value||'').trim();
+    let phone=(phoneEl?.value||'').trim();
+    let firstBad=null;
+    if(!name){ fieldError(nameEl,'Enter your full name'); firstBad=firstBad||nameEl; }
+    if(!phone){ fieldError(phoneEl,'Enter your phone number'); firstBad=firstBad||phoneEl; }
+    else if(!validPhone(phone)){ fieldError(phoneEl,'Enter a valid phone number'); firstBad=firstBad||phoneEl; }
+    if(firstBad){ say('Please check the highlighted fields'); firstBad.focus(); firstBad.scrollIntoView({behavior:'smooth',block:'center'}); return null; }
+    phone=formatGhPhone(phone); if(phoneEl) phoneEl.value=phone;
     const email=P.signed()?P.profile().email:(document.getElementById('email')?.value||'').trim();
     const items=S.cart.map(i=>{const p=parts.find(x=>x.id===i.id);return p?{id:p.id,name:p.name,short:p.short,price:Number(p.price),qty:i.qty}:null}).filter(Boolean);
     const provisional=items.reduce((s,i)=>s+i.price*i.qty,0);
@@ -86,7 +92,7 @@
     const btn=e.target.closest('[data-submit]');
     if(!btn)return;
     e.preventDefault();e.stopImmediatePropagation();
-    if(!P.signed()){say('Create a free account to reserve for pickup');render('signup');return}
+    if(!P.signed()){say('Create a free account to reserve for pickup');P.returnTo='order';render('signup');return}
     if(SB()&&window.PFSB.signedIn()){submitRemote(btn);return}
     const o=saveRequest();if(!o)return;
     const lines=o.items.map(i=>`• ${i.name} (${i.short||''}) ×${i.qty} — ${money(i.price*i.qty)}`);
