@@ -90,11 +90,15 @@ function fitInfo(p){
   return {cls:'neutral',icon:'i',text:'No fitment claim for selected vehicle'};
 }
 
-function image(src, alt, extra=''){
+function image(src, alt, extra='', eager=false){
   // No inline onerror handler: the page CSP (script-src 'self') blocks inline
   // event handlers, so the fallback is applied by a global listener in
   // runtime-guard.js instead.
-  return `<img src="${src}" alt="${safe(alt)}" loading="lazy" ${extra}>`;
+  // Off-screen images load lazily; above-the-fold LCP images (e.g. the hero)
+  // pass eager=true so they aren't deferred. decoding="async" keeps image
+  // decode off the main thread either way.
+  const load = eager ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
+  return `<img src="${src}" alt="${safe(alt)}" ${load} decoding="async" ${extra}>`;
 }
 
 function fitPill(p){
@@ -128,7 +132,7 @@ function hero(){
       </div>
     </div>
     <div class="heroPhotos">
-      <div class="heroPhoto large">${image(IMG.spark,'Spark plugs')}</div>
+      <div class="heroPhoto large">${image(IMG.spark,'Spark plugs','',true)}</div>
       <div class="heroPhoto">${image(IMG.brake,'Brake pad')}</div>
       <div class="heroPhoto">${image(IMG.oil,'Oil filter')}</div>
     </div>
