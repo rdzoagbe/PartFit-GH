@@ -73,10 +73,17 @@ h1,h2,h3{letter-spacing:-.02em}
 }
 .brandMark{
   width:44px;height:44px;border-radius:14px;
-  background:linear-gradient(150deg,var(--n) 20%,var(--r) 130%);
-  box-shadow:var(--sh-navy);font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(155deg,#ffffff,#eef3f9);
+  border:1px solid color-mix(in srgb,var(--n) 12%,transparent);
+  box-shadow:0 6px 16px rgba(10,31,61,.12);
+  display:grid;place-items:center;padding:0;overflow:hidden;
 }
-.brandMark small{font-size:7px;opacity:.9}
+.brandMark .brandLogo{width:30px;height:30px;display:block}
+/* Footer brand lockup (logo on a light chip for contrast on the navy footer) */
+.v3FootBrand{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.v3FootMark{width:42px;height:42px;flex:none;background:linear-gradient(155deg,#ffffff,#eaeff6);border-radius:12px;padding:5px;box-shadow:0 5px 14px rgba(0,0,0,.28)}
+.v3FootWord{display:flex;flex-direction:column;line-height:1;color:#fff;font-size:22px;font-weight:950;letter-spacing:-.02em}
+.v3FootWord b{margin-top:4px;font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#8fb4e6}
 .title{font-size:16px;font-weight:900}
 .title small{color:var(--mu);font-weight:700}
 .cartBtn,.topAction,.v3AccountTop{
@@ -408,7 +415,9 @@ h1,h2,h3{letter-spacing:-.02em}
 }
 .pfWelcome.gone{opacity:0;transform:translateY(-12px);pointer-events:none;visibility:hidden}
 .pfWelcome .wTop{flex:none;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 0;display:flex;align-items:center;gap:10px}
-.pfWelcome .wMark{display:flex;flex-direction:column;line-height:1}
+.pfWelcome .wMark{display:flex;flex-direction:row;align-items:center;gap:10px;line-height:1}
+.pfWelcome .wMark .wWord{display:flex;flex-direction:column}
+.pfWelcome .wMark .wLogo{box-sizing:border-box;width:42px;height:42px;flex:none;background:linear-gradient(155deg,#fff,#eaeff6);border-radius:11px;padding:6px;box-shadow:0 5px 14px rgba(0,0,0,.32)}
 .pfWelcome .wMark b{font-size:20px;font-weight:900;letter-spacing:-.045em;color:#fff}
 .pfWelcome .wMark b span{color:#ff5a63}
 .pfWelcome .wMark .tb{margin-top:3px;height:3px;width:46px;border-radius:2px;background:linear-gradient(90deg,var(--r) 0 33%,var(--gold) 33% 66%,var(--g) 66% 100%)}
