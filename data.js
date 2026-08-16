@@ -5,6 +5,23 @@ const CFG = {
   hours: 'Mon–Sat · 8:30 AM–6:00 PM'
 };
 
+/* Delivery pricing — flat fee per area (editable placeholders for the demo).
+   Pickup is always free. When real payment (MoMo) is wired, these fees must be
+   owned/recomputed server-side so the charged amount can't be tampered with. */
+const DELIVERY = {
+  note: 'Delivery fees are estimates for Greater Accra and confirmed with your final price.',
+  zones: [
+    { id: 'spintex',      label: 'Spintex / Baatsona / Coastal Estates', fee: 20 },
+    { id: 'eastlegon',    label: 'East Legon / Airport / Cantonments',   fee: 30 },
+    { id: 'central',      label: 'Accra Central / Osu / Labadi',         fee: 35 },
+    { id: 'achimota',     label: 'Achimota / Legon / Madina',            fee: 35 },
+    { id: 'tema',         label: 'Tema / Communities',                   fee: 45 },
+    { id: 'kasoa',        label: 'Kasoa / Weija / Mallam',               fee: 50 },
+    { id: 'accra-other',  label: 'Other Greater Accra',                  fee: 60 },
+    { id: 'nationwide',   label: 'Outside Accra (nationwide courier)',   fee: 90 }
+  ]
+};
+
 const IMG = {
   spark: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Spark_plugs.jpg?width=640',
   air: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Air_filter_for_Toyota_1KR-FE.jpg?width=640',
