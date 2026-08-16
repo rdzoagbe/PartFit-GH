@@ -305,10 +305,10 @@ function order(){
       </div>`}).join('')}
     </section>
     <section class="sec card summary">
-      <div class="sum"><span>Items</span><b>${cartCount()}</b></div>
-      <div class="sum"><span>Delivery</span><b>Quoted if needed</b></div>
-      <div class="sum total"><span>Order total</span><span class="price">${money(total)}</span></div>
-      <small>Final availability and vehicle fitment are confirmed before collection/payment.</small>
+      <div class="sum"><span>Subtotal · ${cartCount()} item${cartCount()===1?'':'s'}</span><b>${money(total)}</b></div>
+      <div class="sum"><span>Delivery</span><b id="sumDelivery">Free (pickup)</b></div>
+      <div class="sum total"><span>Total</span><span class="price" id="sumTotal">${money(total)}</span></div>
+      <small id="sumNote">Pick up at Spintex free, or choose delivery below to add your area's fee.</small>
     </section>
     <section class="sec card form">
       <div class="sectionKicker">CUSTOMER DETAILS</div>
@@ -318,14 +318,50 @@ function order(){
       <div class="field"><label>Vehicle</label><input value="${safe(vehicleLabel())}" readonly></div>
       <div class="field"><label>Order note <small>(optional)</small></label><textarea id="note" placeholder="VIN, engine code, urgency, special request…"></textarea></div>
       <div class="field"><label>Fulfilment</label>
-        <label class="location selected"><input type="radio" name="fulfil" value="Pickup — Spintex" checked> <span><b>Pick up at Spintex</b><small>${safe(CFG.addr)}</small></span></label>
-        <label class="location"><input type="radio" name="fulfil" value="Delivery quote"> <span><b>Request delivery quote</b><small>Accra / Tema — confirmed on WhatsApp</small></span></label>
+        <label class="location selected"><input type="radio" name="fulfil" value="pickup" checked> <span><b>Pick up at Spintex — free</b><small>${safe(CFG.addr)}</small></span></label>
+        <label class="location"><input type="radio" name="fulfil" value="delivery"> <span><b>Delivery to my address</b><small>Fee by area · added to your total</small></span></label>
+      </div>
+      <div class="field deliveryFields" hidden>
+        <label>Delivery area *</label>
+        <select id="deliveryZone"><option value="">Select your area…</option>${DELIVERY.zones.map(z=>`<option value="${z.id}">${safe(z.label)} — ${money(z.fee)}</option>`).join('')}</select>
+        <label style="margin-top:11px">Delivery address *</label>
+        <textarea id="deliveryAddr" placeholder="House / street, area, nearest landmark, city"></textarea>
+        <small class="deliveryNote">${safe(DELIVERY.note)}</small>
       </div>
       <label class="confirmLine"><input id="confirmFit" type="checkbox" checked> <span>I understand final fitment is confirmed before the order is fulfilled.</span></label>
       <button class="btn wa full big" data-submit>Send Order on WhatsApp</button>
       <p class="secureNote">🔒 Your form stays on this device until you choose to send it through WhatsApp.</p>
     </section>`}
   </main>${nav('order')}`;
+  if(S.cart.length) recalcOrderTotals();
+}
+
+/* ---- delivery pricing (pickup free; delivery fee by area) ---- */
+function orderSubtotal(){ return S.cart.reduce((a,i)=>{const p=parts.find(x=>x.id===i.id);return a+(p?p.price*i.qty:0)},0); }
+function selectedDelivery(){
+  const fulfil=document.querySelector('input[name="fulfil"]:checked')?.value||'pickup';
+  if(fulfil!=='delivery') return {fulfil:'pickup',fee:0,zone:null,ready:true};
+  const zid=document.getElementById('deliveryZone')?.value||'';
+  const zone=(typeof DELIVERY!=='undefined'?DELIVERY.zones:[]).find(z=>z.id===zid)||null;
+  return {fulfil:'delivery',fee:zone?zone.fee:0,zone,ready:!!zone};
+}
+function recalcOrderTotals(){
+  const df=document.querySelector('.deliveryFields'); if(!df) return;
+  const sub=orderSubtotal(), d=selectedDelivery();
+  d.fulfil==='delivery' ? df.removeAttribute('hidden') : df.setAttribute('hidden','');
+  const dEl=document.getElementById('sumDelivery'), tEl=document.getElementById('sumTotal'), nEl=document.getElementById('sumNote');
+  if(d.fulfil==='pickup'){ if(dEl)dEl.textContent='Free (pickup)'; if(tEl)tEl.textContent=money(sub); if(nEl)nEl.textContent='Pick up at Spintex — no delivery charge.'; }
+  else if(!d.ready){ if(dEl)dEl.textContent='Select area'; if(tEl)tEl.textContent=money(sub); if(nEl)nEl.textContent='Select your delivery area to see the final total.'; }
+  else { if(dEl)dEl.textContent=money(d.fee); if(tEl)tEl.textContent=money(sub+d.fee); if(nEl)nEl.textContent=`Delivery to ${d.zone.label}. Total includes the delivery fee.`; }
+}
+// Read + validate the fulfilment choice for submission.
+function readDeliveryChoice(){
+  const d=selectedDelivery();
+  if(d.fulfil==='pickup') return {mode:'pickup',fee:0,zoneId:'',zoneLabel:'',address:'',fulfilment:'Pickup — Spintex',valid:true};
+  const address=(document.getElementById('deliveryAddr')?.value||'').trim();
+  if(!d.ready) return {mode:'delivery',valid:false,error:'Select your delivery area',field:'deliveryZone'};
+  if(!address) return {mode:'delivery',valid:false,error:'Enter your delivery address',field:'deliveryAddr'};
+  return {mode:'delivery',fee:d.fee,zoneId:d.zone.id,zoneLabel:d.zone.label,address,fulfilment:'Delivery — '+d.zone.label,valid:true};
 }
 
 const qtyCap=p=>Math.max(1,Math.min(Number(p?.stock)||10,10));
@@ -377,6 +413,7 @@ document.addEventListener('change',e=>{
   if(e.target.name==='fulfil'){
     document.querySelectorAll('.location').forEach(x=>x.classList.toggle('selected',x.contains(e.target)));
   }
+  if(e.target.name==='fulfil'||e.target.id==='deliveryZone') recalcOrderTotals();
 });
 
 document.addEventListener('keydown',e=>{
