@@ -704,6 +704,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .topAction{display:grid;place-items:center;min-width:42px;padding:0}
 .topAction svg{display:block}
 
+/* Customer pay box (track page) */
+.v3PayBox{margin-top:14px;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;
+  padding:15px 16px;border-radius:16px;border:1px solid var(--ln);background:var(--surface);box-shadow:var(--sh-sm)}
+.v3PayBox b{display:block;font-size:14px}
+.v3PayBox small{display:block;color:var(--mu);font-size:11.5px;margin-top:2px}
+.v3PayBox .btn{min-height:44px;padding:0 18px;flex:none}
+.v3PayBox.paid{background:var(--fit-cat-bg);border-color:color-mix(in srgb,var(--g) 34%,var(--ln))}
+.v3PayBox.paid .pOk{width:30px;height:30px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:900;flex:none}
+.v3PayBox.pending{background:var(--fit-con-bg);border-color:color-mix(in srgb,var(--gold) 40%,var(--ln))}
+.v3PayBox.soon{background:var(--surface-2)}
+
+/* Staff payment badge */
+.pfPay{margin-left:8px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pfPay.paid{background:var(--fit-cat-bg);color:var(--fit-cat-ink)}
+.pfPay.pend{background:var(--fit-con-bg);color:var(--fit-con-ink)}
+.pfPay.due{background:#fdeaec;color:#b0121d}
+
 /* Delivery fields + confirmation totals */
 .deliveryFields{padding-top:2px}
 .deliveryFields .deliveryNote{color:var(--mu2);font-size:10.5px;line-height:1.45}

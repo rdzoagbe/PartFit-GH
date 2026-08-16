@@ -7,5 +7,8 @@ window.PARTFIT_CONFIG = Object.freeze({
   supabaseUrl: 'https://zvhypcwaqnquwbmfrwuy.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2aHlwY3dhcW5xdXdibWZyd3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NjkyNTQsImV4cCI6MjEwMjI0NTI1NH0.leFVK384t0_UN7QOa5p5xmFPu60xolXPcSWlTQCPpWM',
   currency: 'GHS',
-  locale: 'en-GH'
+  locale: 'en-GH',
+  // Flip to true only after the Paystack edge functions are deployed
+  // (see SETUP-PAYMENTS.md). Until then the "Pay with MoMo" step stays hidden.
+  paymentsEnabled: false
 });
