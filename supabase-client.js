@@ -96,6 +96,7 @@
 
   /* ---------- Orders ---------- */
   const ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at,' +
+    'payment_status,amount_due,paid_at,fulfilment_type,' +
     'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
     'order_events(event_type,from_status,to_status,note,created_at)';
 
@@ -106,6 +107,21 @@
   PFSB.getOrder = ref =>
     rest('/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) + '&select=' + ORDER_COLS + '&limit=1')
       .then(a => (a && a[0]) || null);
+
+  /* ---------- Payments (Paystack Mobile Money) ---------- */
+  // Off by default; set PARTFIT_CONFIG.paymentsEnabled=true once the Paystack
+  // edge functions are deployed (see SETUP-PAYMENTS.md).
+  PFSB.paymentsEnabled = () => !!CFG.paymentsEnabled;
+  // Ask the edge function to open a MoMo charge; returns { authorization_url, reference }.
+  PFSB.startPayment = async (publicRef, email) => {
+    const tok = await token();
+    const res = await fetch(BASE + '/functions/v1/paystack-initialize', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_ref: publicRef, email: email || (PFSB.profile() || {}).email || '' })
+    });
+    return parse(res);
+  };
 
   /* ---------- Staff ---------- */
   PFSB.isStaff = () =>
@@ -142,6 +158,10 @@
     confirmedTotal: o.confirmed_total == null ? null : Number(o.confirmed_total),
     total: Number(o.confirmed_total ?? o.provisional_total ?? 0),
     reservationExpiresAt: o.reservation_expires_at,
+    paymentStatus: o.payment_status || 'unpaid',
+    amountDue: o.amount_due == null ? null : Number(o.amount_due),
+    paidAt: o.paid_at || null,
+    fulfilmentType: o.fulfilment_type || 'pickup',
     items: (o.order_items || []).map(i => ({
       name: i.product_name, short: i.part_number, qty: i.quantity,
       price: Number(i.confirmed_unit_price ?? i.provisional_unit_price ?? 0)

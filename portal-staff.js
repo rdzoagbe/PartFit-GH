@@ -11,14 +11,28 @@
   let curTab = 'submitted';
 
   const gh = n => 'GH₵ ' + Number(n || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const payEnabled = () => !!(window.PFSB && window.PFSB.paymentsEnabled && window.PFSB.paymentsEnabled());
+
+  function payBadge(o) {
+    if (o.payment_status === 'paid') return `<span class="pfPay paid">✓ Paid ${gh(o.amount_due ?? o.confirmed_total)}</span>`;
+    if (o.payment_status === 'pending') return `<span class="pfPay pend">● Payment pending</span>`;
+    if (payEnabled() && o.status === 'approved') return `<span class="pfPay due">● Awaiting payment</span>`;
+    return '';
+  }
 
   function actionsFor(o) {
     const ref = P.esc(o.public_ref), s = o.status;
     const set = (st, label, cls) => `<button class="${cls}" data-staff-set="${ref}" data-status="${st}">${label}</button>`;
     if (s === 'submitted') return set('reviewing', 'Start review', 'btn dark') + set('rejected', 'Reject', 'btn danger');
     if (s === 'reviewing') return `<button class="btn red" data-staff-approve="${ref}" data-prov="${Number(o.provisional_total || 0)}">Approve…</button>` + set('rejected', 'Reject', 'btn danger');
-    if (s === 'approved') return set('ready_for_collection', 'Mark ready', 'btn dark') + set('cancelled', 'Cancel', 'btn danger');
-    if (s === 'ready_for_collection') return set('collected', 'Mark collected', 'btn wa') + set('cancelled', 'Cancel', 'btn danger');
+    if (s === 'approved') {
+      const readyLabel = o.fulfilment_type === 'delivery' ? 'Mark for delivery' : 'Mark ready';
+      // Once online payment is live, only release fulfilment after the cash lands.
+      if (payEnabled() && o.payment_status !== 'paid')
+        return `<span class="pfStaffTerminal">Awaiting MoMo payment</span>` + set('cancelled', 'Cancel', 'btn danger');
+      return set('ready_for_collection', readyLabel, 'btn dark') + set('cancelled', 'Cancel', 'btn danger');
+    }
+    if (s === 'ready_for_collection') return set('collected', o.fulfilment_type === 'delivery' ? 'Mark delivered' : 'Mark collected', 'btn wa') + set('cancelled', 'Cancel', 'btn danger');
     return '<span class="pfStaffTerminal">No further action</span>';
   }
 
@@ -30,7 +44,7 @@
       : `<div class="pfSAmt"><small>Provisional</small><b class="mono">${gh(o.provisional_total)}</b></div>`;
     return `<article class="card pfStaffCard">
       <div class="pfSHead">
-        <div><span class="orderRef mono">${ref}</span><span class="pfSStatus ${TONE[o.status] || 'new'}">${LABEL[o.status] || o.status}</span></div>
+        <div><span class="orderRef mono">${ref}</span><span class="pfSStatus ${TONE[o.status] || 'new'}">${LABEL[o.status] || o.status}</span>${payBadge(o)}</div>
         <div class="pfSDate mono">${P.fmt(o.created_at)}</div>
       </div>
       <div class="pfSVeh">${P.esc(o.vehicle_label || 'No vehicle given')}</div>
