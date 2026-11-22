@@ -10,12 +10,14 @@ Create a Supabase project, choose the nearest suitable region, enable email auth
 
 **Simplest:** paste **`backend/setup-all.sql`** into the Supabase SQL editor and Run it once. It is idempotent (safe to re-run) and combines everything below in the correct order, so ordering mistakes or partial re-runs cannot break the schema.
 
-Then run these two, in this order — both are idempotent:
+Then run these, **in this order** — all are idempotent:
 
 | File | What it adds | Required? |
 |---|---|---|
 | `backend/momo-paystack.sql` | payment ledger + the order payment/delivery columns | Yes — the app reads these columns |
-| `backend/order-integrity.sql` | server-owned delivery pricing, customer contact on the order, stock reservation | Yes — without it delivery is never charged and stock can be oversold |
+| `backend/order-integrity.sql` | server-owned delivery pricing, customer contact on the order, stock reservation | Yes — without it **every order submission fails**, delivery is never charged and stock can be oversold |
+| `backend/payment-safety.sql` | underpayment/refund handling, recording a payment the webhook missed, clearing an abandoned checkout | Yes before taking money |
+| `backend/reservation-expiry-cron.sql` | schedules the 15-minute expiry sweep (needs pg_cron enabled) | Yes once stock is reserved, or abandoned reservations hold stock forever |
 
 `backend/order-integrity.sql` replaces `submit_order`, `staff_set_order_status`
 and `expire_partfit_approvals_system` with versions that: look the delivery fee
@@ -25,6 +27,12 @@ the customer's name and phone onto the order so staff can reach them, make
 approval and give it back on cancel/reject/expire, refuse to cancel an order
 that has already been paid, and skip paid or in-flight payments when expiring
 reservations.
+
+> **If you ever re-run `setup-all.sql` on a live database**, re-run
+> `momo-paystack.sql`, `order-integrity.sql` and `payment-safety.sql`
+> immediately afterwards. `setup-all.sql` holds the original
+> `submit_order` / `staff_set_order_status` / expiry functions and will
+> replace the hardened ones. (It no longer resets live prices or stock.)
 
 To check a database after running them:
 

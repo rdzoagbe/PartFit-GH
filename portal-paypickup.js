@@ -2,6 +2,29 @@
 (() => {
   const P=window.PFV3;
   P.steps=['Order submitted','Fitment & stock review','Approved — Pay on Pickup','Ready for collection','Collected'];
+
+  // Statuses that END an order. PFSB.STATUS_STEP has no entry for these, so
+  // anything using `stage` alone would show a dead order as step 0 forever.
+  P.ENDED={
+    rejected:['Order not accepted','We could not fulfil this order. Nothing is owed. Talk to us and we will help you find the right part.'],
+    cancelled:['Order cancelled','This order was cancelled. If you had already paid, your refund is being handled — contact us if you have not heard.'],
+    expired:['Reservation expired','The hold on these parts elapsed, so they went back into stock. You can order again.']
+  };
+  // A delivery order is not collected at Spintex, and once MoMo is live payment
+  // happens after approval rather than at the counter. Label accordingly.
+  P.stepsFor=function(o){
+    const del=(o||{}).fulfilmentType==='delivery';
+    const payNow=window.PFSB&&window.PFSB.paymentsEnabled&&window.PFSB.paymentsEnabled();
+    return ['Order submitted','Fitment & stock review',
+      payNow?'Approved — pay now':(del?'Approved — pay on delivery':'Approved — pay on pickup'),
+      del?'Packed for delivery':'Ready for collection',
+      del?'Delivered':'Collected'];
+  };
+  P.fulfilLine=function(o){
+    return (o||{}).fulfilmentType==='delivery'
+      ? 'Delivery'+(o.deliveryAddress?' — '+o.deliveryAddress:'')
+      : 'Pickup — Spintex';
+  };
   const makeId=()=>`PF-${new Date().toISOString().slice(2,10).replaceAll('-','')}-${Math.floor(100+Math.random()*900)}`;
   function saveRequest(){
     if(!S.cart.length)return null;

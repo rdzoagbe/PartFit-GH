@@ -20,3 +20,16 @@ $$;
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 create schema if not exists cron;
+-- Minimal pg_cron stand-in so backend/reservation-expiry-cron.sql applies here.
+create table if not exists cron.job (
+  jobid bigserial primary key, jobname text unique, schedule text, command text);
+create or replace function cron.schedule(p_jobname text, p_schedule text, p_command text)
+returns bigint language plpgsql as $$
+declare id bigint; begin
+  insert into cron.job(jobname, schedule, command) values (p_jobname, p_schedule, p_command)
+  on conflict(jobname) do update set schedule=excluded.schedule, command=excluded.command
+  returning jobid into id;
+  return id; end $$;
+create or replace function cron.unschedule(p_jobname text)
+returns boolean language plpgsql as $$
+begin delete from cron.job where jobname = p_jobname; return true; end $$;

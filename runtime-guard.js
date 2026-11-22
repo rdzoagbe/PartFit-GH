@@ -11,14 +11,22 @@
   }, true);
 
   localStorage.removeItem('pfSignedInV3');
-  CFG.wa='';
-  CFG.addr='Spintex Road, Accra — exact collection point confirmed with approved order';
+
+  // The shop's real contact details come from partfit-config.js, which is the
+  // one file a deployment edits. data.js only holds the sample/demo values.
+  // When PARTFIT_CONFIG.whatsapp is empty we stay in test mode, which copies
+  // the message instead of sending it — so an unconfigured deployment cannot
+  // silently drop customer enquiries while looking like it sent them.
+  const DEPLOY = window.PARTFIT_CONFIG || {};
+  CFG.wa = String(DEPLOY.whatsapp || '').replace(/[^0-9]/g, '');
+  if (DEPLOY.pickupAddress) CFG.addr = DEPLOY.pickupAddress;
+
   const baseWhatsapp=whatsapp;
   whatsapp=function(text){
     if(CFG.wa)return baseWhatsapp(text);
     if(navigator.clipboard?.writeText)navigator.clipboard.writeText(text).catch(()=>{});
-    say('Test mode: WhatsApp message copied. Add the real business number before launch.');
-    console.info('PartFit WhatsApp test message:',text);
+    say('Test mode: WhatsApp message copied. Add the business number in partfit-config.js before launch.');
+    console.warn('PartFit is in WhatsApp TEST MODE (PARTFIT_CONFIG.whatsapp is empty). Message:',text);
   };
 
   // ---- Client-side error monitoring hook ----

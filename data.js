@@ -5,9 +5,11 @@ const CFG = {
   hours: 'Mon–Sat · 8:30 AM–6:00 PM'
 };
 
-/* Delivery pricing — flat fee per area (editable placeholders for the demo).
-   Pickup is always free. When real payment (MoMo) is wired, these fees must be
-   owned/recomputed server-side so the charged amount can't be tampered with. */
+/* Delivery pricing — OFFLINE FALLBACK ONLY. The authoritative fees live in the
+   delivery_zones table (backend/order-integrity.sql); the cart fetches them and
+   overwrites DELIVERY.zones, and submit_order looks the fee up server-side from
+   a zone id, so the charged amount can never come from the browser. Edit the
+   live prices in delivery_zones, and keep these in step for the offline demo. */
 const DELIVERY = {
   note: 'Delivery fees are estimates for Greater Accra and confirmed with your final price.',
   zones: [

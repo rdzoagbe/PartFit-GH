@@ -137,6 +137,15 @@
   // The server owns the delivery fee: we send a zone id, never an amount.
   // Contact name/phone are snapshot onto the order so staff can reach the
   // customer (the profiles table is owner-only under RLS).
+  // If the database has not had backend/order-integrity.sql applied, this
+  // signature does not exist and PostgREST answers PGRST202. Unlike reading
+  // orders, there is no safe fallback — an order submitted without its
+  // delivery and contact details would be unfulfillable — so fail loudly with
+  // something a customer can act on instead of a raw Postgres error.
+  const schemaDrift = e =>
+    !!e && (((e.body || {}).code === 'PGRST202') ||
+      /could not find the function|does not exist/i.test(String(e.message || '')));
+
   PFSB.submitOrder = (vehicleLabel, items, opts = {}) =>
     rest('/rpc/submit_order', { method: 'POST', body: {
       p_vehicle_label: vehicleLabel || '',
@@ -147,7 +156,15 @@
       p_contact_name: opts.contactName || null,
       p_contact_phone: opts.contactPhone || null,
       p_note: opts.note || null
-    } });
+    } }).catch(e => {
+      if (schemaDrift(e)) {
+        console.error('submit_order signature missing — apply backend/order-integrity.sql', e);
+        const err = new Error('The shop’s order system needs a database update. Please send this order on WhatsApp instead, or try again shortly.');
+        err.schemaDrift = true;
+        throw err;
+      }
+      throw e;
+    });
 
   // Delivery areas and their fees, as the server will charge them. The
   // DELIVERY constant in data.js is only the offline/demo fallback.
@@ -174,6 +191,11 @@
     return parse(res);
   };
 
+  // Clear an abandoned checkout so the Pay button comes back. The server only
+  // clears intents older than 15 minutes with no successful payment attached.
+  PFSB.releaseStalePayment = ref =>
+    rest('/rpc/release_stale_payment_intent', { method: 'POST', body: { p_public_ref: ref } });
+
   /* ---------- Staff ---------- */
   PFSB.isStaff = () =>
     rest('/staff_roles?select=role&user_id=eq.' + encodeURIComponent((PFSB.user() || {}).id))
@@ -181,6 +203,15 @@
   PFSB.staffListOrders = status =>
     orderQuery(cols => '/orders?select=' + cols +
       (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+  // Cash / direct MoMo at the counter, or a Paystack charge whose webhook never
+  // arrived. Server-side: staff only, and it refuses less than the amount due.
+  PFSB.recordManualPayment = (ref, amount, channel, note) =>
+    rest('/rpc/staff_record_manual_payment', { method: 'POST', body: {
+      p_public_ref: ref, p_amount: amount, p_channel: channel || 'cash', p_note: note || null } });
+  PFSB.recordRefund = (ref, amount, note) =>
+    rest('/rpc/staff_record_refund', { method: 'POST', body: {
+      p_public_ref: ref, p_amount: amount, p_note: note || null } });
+
   PFSB.setOrderStatus = (ref, status, opts = {}) =>
     rest('/rpc/staff_set_order_status', { method: 'POST', body: {
       p_public_ref: ref, p_status: status,

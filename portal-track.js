@@ -22,16 +22,29 @@
     if(o.paymentStatus==='paid') return `<section class="v3PayBox paid"><span class="pOk">✓</span><div><b>Payment received</b><small>${money(amt)} paid · awaiting ${dest}</small></div></section>`;
     if(o.status!=='approved') return '';
     if(!enabled) return `<section class="v3PayBox soon"><div><b>Online payment coming soon</b><small>For now you pay on ${dest} once the order is approved.</small></div></section>`;
-    if(o.paymentStatus==='pending') return `<section class="v3PayBox pending"><div><b>Confirming your payment…</b><small>This can take a few seconds after you approve on your phone.</small></div><button class="btn outlineNavy" data-v3-track="${P.esc(o.id)}">Refresh</button></section>`;
+    if(o.paymentStatus==='pending') return `<section class="v3PayBox pending"><div><b>Confirming your payment…</b><small>This can take a few seconds after you approve on your phone.</small></div><div class="v3PayBtns"><button class="btn outlineNavy" data-v3-track="${P.esc(o.id)}">Refresh</button><button class="btn ghostLine" data-pay-retry="${P.esc(o.id)}">Didn’t go through?</button></div></section>`;
     return `<section class="v3PayBox"><div><b>Pay with Mobile Money</b><small>Approved total ${money(amt)} · MTN · Telecel · AirtelTigo</small></div><button class="btn red" data-pay-momo="${P.esc(o.id)}">Pay ${money(amt)}</button></section>`;
   }
+  // Statuses that END an order. STATUS_STEP has no entry for these, so they
+  // used to fall back to stage 0 and the tracker told the customer their
+  // cancelled order was "Order received" indefinitely.
   function renderTrack(o){
+    const ended=P.ENDED[o.status];
+    const steps=P.stepsFor(o);
     const s=Math.min(4,Number(o.stage||0));
+    const fee=Number(o.deliveryFee||0);
+    const dueLabel=o.confirmedTotal!=null?'Approved total':'Provisional basket total';
+    const dueAmount=o.confirmedTotal!=null
+      ? Number(o.confirmedTotal)
+      : Number(o.provisionalTotal??o.total??0)+fee;
+    const fulfilLine=P.fulfilLine(o);
     app.innerHTML=appHeader('Track Order',o.id)+`<main class="page">
-      <section class="v3TrackHero"><div><span class="sectionKicker">${o.demo?'DEMO TRACKING':'ORDER STATUS'}</span><h1>${P.esc(o.id)}</h1><p>${P.fmt(o.createdAt)} · Pay on Pickup</p></div><div><small>Current status</small><b>${P.esc(P.steps[s])}</b></div></section>
-      <section class="card v3Timeline">${P.steps.map((x,i)=>`<div class="v3Step ${i<=s?'done':''} ${i===s?'current':''}"><span>${i<=s?'✓':i+1}</span><div><b>${P.esc(x)}</b><small>${i<s?'Completed':i===s?'Current':'Pending'}</small></div></div>`).join('')}</section>
-      <section class="v3ApprovalAmount"><div><small>${o.confirmedTotal!=null?'Approved total':'Provisional basket total'}</small><b>${money(Number(o.confirmedTotal??o.provisionalTotal??o.total??0))}</b></div><p>${o.confirmedTotal!=null?'This is your final amount, including delivery if selected.':'No payment is due yet. Wait for PartFit approval and the confirmed price.'}</p></section>
-      ${paySection(o)}
+      <section class="v3TrackHero"><div><span class="sectionKicker">${o.demo?'DEMO TRACKING':'ORDER STATUS'}</span><h1>${P.esc(o.id)}</h1><p>${P.fmt(o.createdAt)} · ${P.esc(fulfilLine)}</p></div><div><small>Current status</small><b>${P.esc(ended?ended[0]:steps[s])}</b></div></section>
+      ${ended
+        ? `<section class="card v3Ended"><span aria-hidden="true">✕</span><div><b>${P.esc(ended[0])}</b><p>${P.esc(ended[1])}</p></div></section>`
+        : `<section class="card v3Timeline">${steps.map((x,i)=>`<div class="v3Step ${i<=s?'done':''} ${i===s?'current':''}"><span>${i<=s?'✓':i+1}</span><div><b>${P.esc(x)}</b><small>${i<s?'Completed':i===s?'Current':'Pending'}</small></div></div>`).join('')}</section>`}
+      ${ended?'':`<section class="v3ApprovalAmount"><div><small>${dueLabel}</small><b>${money(dueAmount)}</b></div><p>${o.confirmedTotal!=null?(fee>0?'This is your final amount, including '+money(fee)+' delivery.':'This is your final amount.'):(fee>0?'Includes '+money(fee)+' delivery. No payment is due yet — wait for PartFit approval and the confirmed price.':'No payment is due yet. Wait for PartFit approval and the confirmed price.')}</p></section>`}
+      ${ended?'':paySection(o)}
       ${o.demo?`<section class="prototypeControl"><div><b>Prototype preview</b><p>Advance the sample order to see each customer status.</p></div><button class="btn dark" data-v3-advance>Advance Status</button></section>`:''}
       ${P.footer()}</main>${nav('orders')}`;
   }
@@ -60,6 +73,17 @@
         if(r&&r.authorization_url){ location.href=r.authorization_url; }
         else { say('Could not start payment'); pay.disabled=false; pay.textContent=orig; }
       }).catch(err=>{ say(err.message||'Could not start payment'); pay.disabled=false; pay.textContent='Try again'; });
+      return;
+    }
+    // Abandoned checkout: ask the server to clear the stale intent so the Pay
+    // button comes back. The server refuses if money is actually attached.
+    const retry=e.target.closest('[data-pay-retry]');
+    if(retry){
+      const ref=retry.dataset.payRetry; retry.disabled=true; retry.textContent='Checking…';
+      window.PFSB.releaseStalePayment(ref).then(cleared=>{
+        if(cleared){ say('You can start the payment again'); render('track',ref); }
+        else { retry.disabled=false; retry.textContent='Didn’t go through?'; say('Your payment is still being confirmed — give it a moment, then refresh'); }
+      }).catch(err=>{ retry.disabled=false; retry.textContent='Didn’t go through?'; say(err.message||'Could not check the payment'); });
       return;
     }
   },true);

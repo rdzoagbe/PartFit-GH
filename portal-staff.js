@@ -25,14 +25,22 @@
     const set = (st, label, cls) => `<button class="${cls}" data-staff-set="${ref}" data-status="${st}">${label}</button>`;
     if (s === 'submitted') return set('reviewing', 'Start review', 'btn dark') + set('rejected', 'Reject', 'btn danger');
     if (s === 'reviewing') return `<button class="btn red" data-staff-approve="${ref}" data-prov="${Number(o.provisional_total || 0)}">Approve…</button>` + set('rejected', 'Reject', 'btn danger');
+    const due = Number(o.amount_due ?? o.confirmed_total ?? 0);
+    const takePayment = `<button class="btn wa" data-take-payment="${ref}" data-due="${due}">Record payment</button>`;
+    const refund = `<button class="btn ghostLine" data-refund="${ref}" data-due="${due}">Record refund</button>`;
     if (s === 'approved') {
       const readyLabel = o.fulfilment_type === 'delivery' ? 'Mark for delivery' : 'Mark ready';
-      // Once online payment is live, only release fulfilment after the cash lands.
-      if (payEnabled() && o.payment_status !== 'paid')
-        return `<span class="pfStaffTerminal">Awaiting MoMo payment</span>` + set('cancelled', 'Cancel', 'btn danger');
-      return set('ready_for_collection', readyLabel, 'btn dark') + set('cancelled', 'Cancel', 'btn danger');
+      if (o.payment_status === 'paid')
+        return set('ready_for_collection', readyLabel, 'btn dark') + refund + set('cancelled', 'Cancel', 'btn danger');
+      // Only release goods after the money lands — but staff can record cash or
+      // a direct MoMo transfer taken at the counter, and a charge whose webhook
+      // never arrived, so a missed payment is never a dead end.
+      if (payEnabled())
+        return `<span class="pfStaffTerminal">Awaiting payment</span>` + takePayment + set('cancelled', 'Cancel', 'btn danger');
+      return set('ready_for_collection', readyLabel, 'btn dark') + takePayment + set('cancelled', 'Cancel', 'btn danger');
     }
-    if (s === 'ready_for_collection') return set('collected', o.fulfilment_type === 'delivery' ? 'Mark delivered' : 'Mark collected', 'btn wa') + set('cancelled', 'Cancel', 'btn danger');
+    if (s === 'ready_for_collection') return set('collected', o.fulfilment_type === 'delivery' ? 'Mark delivered' : 'Mark collected', 'btn wa') +
+      (o.payment_status === 'paid' ? refund : takePayment) + set('cancelled', 'Cancel', 'btn danger');
     return '<span class="pfStaffTerminal">No further action</span>';
   }
 
@@ -129,6 +137,36 @@
       window.PFSB.setOrderStatus(ref, 'approved', { confirmedTotal: price, note })
         .then(() => { say('Order ' + ref + ' approved'); load(); })
         .catch(err => { conf.disabled = false; conf.textContent = 'Confirm approval'; say(err.message || 'Could not approve'); });
+      return;
+    }
+
+    const take = e.target.closest('[data-take-payment]');
+    if (take) {
+      const ref = take.dataset.takePayment, due = Number(take.dataset.due || 0);
+      const raw = prompt('Amount received for ' + ref + (due ? ' (GH\u20B5 ' + due.toFixed(2) + ' due)' : '') + ':', due ? due.toFixed(2) : '');
+      if (raw === null) return;
+      const amount = parseFloat(raw);
+      if (!Number.isFinite(amount) || amount <= 0) { say('Enter the amount received'); return; }
+      const channel = prompt('How was it paid? (cash, momo, bank)', 'cash');
+      if (channel === null) return;
+      take.disabled = true; take.textContent = 'Recording…';
+      window.PFSB.recordManualPayment(ref, amount, channel, 'Recorded in the staff console')
+        .then(() => { say('Payment recorded for ' + ref); load(); })
+        .catch(err => { take.disabled = false; take.textContent = 'Record payment'; say(err.message || 'Could not record the payment'); });
+      return;
+    }
+
+    const ref_ = e.target.closest('[data-refund]');
+    if (ref_) {
+      const ref = ref_.dataset.refund, due = Number(ref_.dataset.due || 0);
+      const raw = prompt('Amount refunded for ' + ref + ' (refund it in Paystack or in cash first):', due ? due.toFixed(2) : '');
+      if (raw === null) return;
+      const amount = parseFloat(raw);
+      if (!Number.isFinite(amount) || amount <= 0) { say('Enter the refunded amount'); return; }
+      ref_.disabled = true; ref_.textContent = 'Recording…';
+      window.PFSB.recordRefund(ref, amount, 'Recorded in the staff console')
+        .then(() => { say('Refund recorded for ' + ref + ' — the order can now be cancelled'); load(); })
+        .catch(err => { ref_.disabled = false; ref_.textContent = 'Record refund'; say(err.message || 'Could not record the refund'); });
       return;
     }
 

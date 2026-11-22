@@ -42,5 +42,30 @@ for (const f of jsFiles) {
 }
 if (!parseErrors) ok(`${jsFiles.length} root JS files scanned`);
 
+// 5. The client's RPC parameters must exist in the committed SQL. The shipped
+//    build once sent eight parameters to submit_order while the documented
+//    schema defined two, so every order failed with a raw PostgREST error on a
+//    database that had not had the newer migration applied. This catches that
+//    class of drift at review time.
+const sqlAll = readdirSync('backend')
+  .filter(f => f.endsWith('.sql'))
+  .map(f => readFileSync(`backend/${f}`, 'utf8'))
+  .join('\n');
+const clientJs = readdirSync('.').filter(f => f.endsWith('.js'))
+  .map(f => readFileSync(f, 'utf8')).join('\n');
+
+const rpcCalls = [...clientJs.matchAll(/\/rpc\/([a-z0-9_]+)'[\s\S]{0,900}?\}\s*\}/g)];
+let driftErrors = 0, checkedParams = 0;
+for (const m of rpcCalls) {
+  const fn = m[1];
+  const fnDefined = new RegExp(`function\\s+public\\.${fn}\\s*\\(`).test(sqlAll);
+  if (!fnDefined) { bad(`client calls /rpc/${fn} but no backend/*.sql defines public.${fn}()`); driftErrors++; continue; }
+  for (const pm of m[0].matchAll(/\b(p_[a-z0-9_]+)\s*:/g)) {
+    checkedParams++;
+    if (!sqlAll.includes(pm[1])) { bad(`${fn}() is sent ${pm[1]}, which appears in no backend/*.sql`); driftErrors++; }
+  }
+}
+if (!driftErrors) ok(`${rpcCalls.length} client RPC calls match the SQL (${checkedParams} parameters checked)`);
+
 console.log(failed ? '\nCI checks FAILED' : '\nCI checks passed');
 process.exit(failed);

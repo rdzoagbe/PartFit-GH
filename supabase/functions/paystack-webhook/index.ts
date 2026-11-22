@@ -20,7 +20,16 @@ Deno.serve(async (req) => {
   let evt: any;
   try { evt = JSON.parse(body); } catch { return new Response("Bad payload", { status: 400 }); }
 
-  if (evt?.event === "charge.success" && evt?.data?.reference) {
+  // charge.failed matters too: settling it as a failure releases the order's
+  // 'pending' payment status so the customer can try again, instead of leaving
+  // the order permanently unpayable.
+  const settleable: Record<string, "success" | "failed"> = {
+    "charge.success": "success",
+    "charge.failed": "failed",
+  };
+  const outcome = settleable[evt?.event as string];
+
+  if (outcome && evt?.data?.reference) {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -28,13 +37,22 @@ Deno.serve(async (req) => {
     const d = evt.data;
     const { error } = await supabase.rpc("settle_paystack_payment", {
       p_reference: d.reference,
-      p_status: "success",
+      p_status: outcome,
       p_amount: Number(d.amount) / 100, // pesewas -> GHS
       p_channel: d.channel ?? null,
       p_raw: d,
     });
-    // Log but still 200 so Paystack doesn't hammer retries on a transient DB blip.
-    if (error) console.error("settle_paystack_payment failed:", error.message);
+    if (error) {
+      // 5xx so Paystack RETRIES. Returning 200 here used to drop the event on
+      // the floor: a real payment could be lost with nobody told. settle is
+      // idempotent, so a retry is always safe.
+      console.error("settle_paystack_payment failed:", error.message);
+      return new Response("settle failed", { status: 500 });
+    }
+  } else {
+    // Anything else (refunds, transfers, dashboard pings) is acknowledged and
+    // not acted on. Refunds are recorded by staff via staff_record_refund.
+    console.log("ignoring Paystack event:", evt?.event);
   }
 
   return new Response("ok", { status: 200 });
