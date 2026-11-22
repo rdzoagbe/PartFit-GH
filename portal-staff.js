@@ -39,22 +39,38 @@
   function card(o) {
     const ref = P.esc(o.public_ref);
     const items = (o.order_items || []).map(i => `<div class="pfSItem"><span>${P.esc(i.product_name)} <b class="mono">×${i.quantity}</b></span><span class="mono">${gh(i.provisional_unit_price)}</span></div>`).join('');
+    const fee = Number(o.delivery_fee || 0);
     const amount = o.confirmed_total != null
-      ? `<div class="pfSAmt"><small>Approved</small><b class="mono">${gh(o.confirmed_total)}</b></div>`
-      : `<div class="pfSAmt"><small>Provisional</small><b class="mono">${gh(o.provisional_total)}</b></div>`;
+      ? `<div class="pfSAmt"><small>Approved${fee > 0 ? ' · incl. delivery ' + gh(fee) : ''}</small><b class="mono">${gh(o.confirmed_total)}</b></div>`
+      : `<div class="pfSAmt"><small>Provisional${fee > 0 ? ' + delivery ' + gh(fee) : ''}</small><b class="mono">${gh(Number(o.provisional_total || 0) + fee)}</b></div>`;
+    // Staff need someone to call and somewhere to take it. These come from the
+    // order row itself (snapshot at submit), not from the profiles table.
+    const phone = o.contact_phone || '';
+    const contact = `<div class="pfSContact">
+      <span class="pfSWho"><b>${P.esc(o.contact_name || 'No name on this order')}</b>${phone
+        ? ` · <a class="mono" href="tel:${P.esc(phone.replace(/[^+0-9]/g, ''))}">${P.esc(phone)}</a>` : ''}</span>
+      ${o.fulfilment_type === 'delivery'
+        ? `<span class="pfSDeliver"><b>Deliver</b> → ${P.esc(o.delivery_address || 'no address given')}${fee > 0 ? ' · fee ' + gh(fee) : ''}</span>`
+        : '<span class="pfSPickup"><b>Pickup</b> → Spintex</span>'}
+      ${o.customer_note ? `<span class="pfSNote">Note: ${P.esc(o.customer_note)}</span>` : ''}
+    </div>`;
     return `<article class="card pfStaffCard">
       <div class="pfSHead">
         <div><span class="orderRef mono">${ref}</span><span class="pfSStatus ${TONE[o.status] || 'new'}">${LABEL[o.status] || o.status}</span>${payBadge(o)}</div>
         <div class="pfSDate mono">${P.fmt(o.created_at)}</div>
       </div>
       <div class="pfSVeh">${P.esc(o.vehicle_label || 'No vehicle given')}</div>
+      ${contact}
       <div class="pfSItems">${items || '<span class="pfSMuted">No line items</span>'}</div>
       <div class="pfSFoot">${amount}<div class="pfStaffActions">${actionsFor(o)}</div></div>
       <form class="pfApprove" data-approve-form="${ref}" hidden>
         <div class="pfApproveRow">
-          <label>Confirmed total (GH₵)<input type="number" step="0.01" min="0" class="pfApprovePrice" value="${Number(o.provisional_total || 0)}" inputmode="decimal"></label>
+          <label>Parts total (GH₵)<input type="number" step="0.01" min="0" class="pfApprovePrice" value="${Number(o.provisional_total || 0)}" inputmode="decimal"></label>
           <label>Note <small>(optional)</small><input type="text" class="pfApproveNote" placeholder="Fitment confirmed, etc."></label>
         </div>
+        <p class="pfApproveHint">${fee > 0
+          ? `Delivery <b class="mono">${gh(fee)}</b> is added by the server — the customer pays parts + delivery.`
+          : 'Pickup order — no delivery fee is added.'}</p>
         <div class="pfApproveBtns"><button type="button" class="btn red" data-approve-confirm="${ref}">Confirm approval</button><button type="button" class="btn ghostLine" data-approve-cancel>Cancel</button></div>
       </form>
     </article>`;
@@ -108,7 +124,7 @@
       const ref = conf.dataset.approveConfirm, form = conf.closest('.pfApprove');
       const price = parseFloat(form.querySelector('.pfApprovePrice').value);
       const note = form.querySelector('.pfApproveNote').value.trim();
-      if (!Number.isFinite(price) || price <= 0) { say('Enter the confirmed total'); return; }
+      if (!Number.isFinite(price) || price <= 0) { say('Enter the parts total'); return; }
       conf.disabled = true; conf.textContent = 'Approving…';
       window.PFSB.setOrderStatus(ref, 'approved', { confirmedTotal: price, note })
         .then(() => { say('Order ' + ref + ' approved'); load(); })

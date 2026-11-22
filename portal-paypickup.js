@@ -23,7 +23,27 @@
     const o={id:makeId(),createdAt:new Date().toISOString(),stage:0,name,phone,email,vehicle:vehicleLabel(),fulfilment:del.fulfilment,deliveryFee:del.fee||0,deliveryAddress:del.address||'',payment:'Pay after approval',provisionalTotal:provisional,total:provisional+(del.fee||0),confirmedTotal:null,items};
     list.unshift(o);P.write(P.keys.orders,list.slice(0,100));return o;
   }
+  // Keep the fees the customer SEES in step with the fees the server CHARGES.
+  // data.js is only the offline/demo fallback; delivery_zones is authoritative.
+  let zonesSynced=false;
+  function syncDeliveryZones(){
+    if(zonesSynced||!SB()||!window.PFSB.listDeliveryZones)return;
+    window.PFSB.listDeliveryZones().then(rows=>{
+      if(!Array.isArray(rows)||!rows.length)return;
+      zonesSynced=true;
+      DELIVERY.zones=rows.map(r=>({id:r.id,label:r.label,fee:Number(r.fee)}));
+      const sel=document.getElementById('deliveryZone');
+      if(!sel)return;
+      const keep=sel.value;
+      sel.innerHTML='<option value="">Select your area…</option>'+
+        DELIVERY.zones.map(z=>`<option value="${safe(z.id)}">${safe(z.label)} — ${money(z.fee)}</option>`).join('');
+      if(keep&&DELIVERY.zones.some(z=>z.id===keep))sel.value=keep;
+      if(typeof recalcOrderTotals==='function')recalcOrderTotals();
+    }).catch(()=>{/* keep the data.js fallback */});
+  }
+
   function cartPayNotice(){
+    syncDeliveryZones();
     const form=document.querySelector('.form');if(!form)return;
     form.insertAdjacentHTML('beforebegin',`<section class="v3PayNotice"><span>✓</span><div><b>No payment now</b><p>Submit your order. PartFit confirms exact fitment, stock and your final price — including delivery if you chose it — then you pay once it's approved.</p></div></section>`);
     const btn=form.querySelector('[data-submit]');if(btn)btn.textContent='Submit Order for Approval';
@@ -76,8 +96,27 @@
     whatsapp(`Hello PartFit Ghana, I have submitted an order for approval.\n\nOrder: ${ref}\n${lines.join('\n')}\n\nSubtotal: ${money(subtotal)}\n${fulfilLines(del)}\nProvisional total: ${money(total)}\nVehicle: ${vehicle}${name?'\nName: '+name:''}\nPayment: PAY AFTER APPROVAL\n\nPlease confirm exact fitment, stock and the final amount to pay.`);
   }
 
+  // Name + phone are required on the remote path too: the server snapshots
+  // them onto the order so staff have someone to call, and it rejects a
+  // submission without them.
+  function readContact(){
+    const nameEl=document.getElementById('name'), phoneEl=document.getElementById('phone');
+    const name=(nameEl?.value||'').trim();
+    let phone=(phoneEl?.value||'').trim();
+    const prof=P.profile()||{};
+    let firstBad=null;
+    if(!name){ fieldError(nameEl,'Enter your full name'); firstBad=firstBad||nameEl; }
+    if(!phone){ fieldError(phoneEl,'Enter your phone number'); firstBad=firstBad||phoneEl; }
+    else if(!validPhone(phone)){ fieldError(phoneEl,'Enter a valid phone number'); firstBad=firstBad||phoneEl; }
+    if(firstBad) return {valid:false,el:firstBad};
+    phone=formatGhPhone(phone); if(phoneEl) phoneEl.value=phone;
+    return {valid:true,name:name||prof.name||'',phone,note:(document.getElementById('note')?.value||'').trim()};
+  }
+
   async function submitRemote(btn){
     if(!S.cart.length){say('Your order is empty');return}
+    const contact=readContact();
+    if(!contact.valid){ contact.el.focus(); contact.el.scrollIntoView({behavior:'smooth',block:'center'}); say('Please check the highlighted fields'); return; }
     const del=readDeliveryChoice();
     if(!del.valid){ const el=document.getElementById(del.field); if(el){fieldError(el,del.error);el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});} say('Please check the highlighted fields'); return; }
     const snapshot=S.cart.map(i=>{const p=parts.find(x=>x.id===i.id);return p?{name:p.name,short:p.short,qty:i.qty}:null}).filter(Boolean);
@@ -86,12 +125,17 @@
     const label=vehicleLabel();
     const orig=btn&&btn.textContent; if(btn){btn.disabled=true;btn.textContent='Submitting…';}
     try{
-      const res=await window.PFSB.submitOrder(label,items);
+      const res=await window.PFSB.submitOrder(label,items,{
+        fulfilmentType:del.mode, deliveryZone:del.zoneId||null, deliveryAddress:del.address||null,
+        contactName:contact.name, contactPhone:contact.phone, note:contact.note
+      });
       const ref=res&&res.public_ref;
-      const subtotal=res&&res.provisional_total!=null?res.provisional_total:provisional;
+      const subtotal=res&&res.provisional_total!=null?Number(res.provisional_total):provisional;
+      // The fee the server actually recorded wins over the one we displayed.
+      const fee=res&&res.delivery_fee!=null?Number(res.delivery_fee):(del.fee||0);
       S.cart=[];save();
-      waSummary(ref,snapshot,subtotal,del,label,(P.profile()||{}).name);
-      P.lastConfirmation={ref,subtotal,fee:del.fee||0,total:subtotal+(del.fee||0),items:snapshot.length,vehicle:label,fulfilment:del.fulfilment};
+      waSummary(ref,snapshot,subtotal,Object.assign({},del,{fee}),label,contact.name);
+      P.lastConfirmation={ref,subtotal,fee,total:subtotal+fee,items:snapshot.length,vehicle:label,fulfilment:del.fulfilment};
       render('confirmation');
     }catch(err){
       if(btn){btn.disabled=false;btn.textContent=orig;}

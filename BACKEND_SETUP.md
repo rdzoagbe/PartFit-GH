@@ -10,6 +10,29 @@ Create a Supabase project, choose the nearest suitable region, enable email auth
 
 **Simplest:** paste **`backend/setup-all.sql`** into the Supabase SQL editor and Run it once. It is idempotent (safe to re-run) and combines everything below in the correct order, so ordering mistakes or partial re-runs cannot break the schema.
 
+Then run these two, in this order — both are idempotent:
+
+| File | What it adds | Required? |
+|---|---|---|
+| `backend/momo-paystack.sql` | payment ledger + the order payment/delivery columns | Yes — the app reads these columns |
+| `backend/order-integrity.sql` | server-owned delivery pricing, customer contact on the order, stock reservation | Yes — without it delivery is never charged and stock can be oversold |
+
+`backend/order-integrity.sql` replaces `submit_order`, `staff_set_order_status`
+and `expire_partfit_approvals_system` with versions that: look the delivery fee
+up server-side from `delivery_zones` (the browser only sends a zone id), snapshot
+the customer's name and phone onto the order so staff can reach them, make
+`confirmed_total` the all-in amount (parts + delivery), reserve stock on
+approval and give it back on cancel/reject/expire, refuse to cancel an order
+that has already been paid, and skip paid or in-flight payments when expiring
+reservations.
+
+To check a database after running them:
+
+```bash
+DATABASE_URL=postgres://…  ./scripts/db-test.sh    # throwaway database only — it drops schema public
+```
+
+
 Or run the individual files in this exact order:
 
 1. `backend/supabase-schema.sql`

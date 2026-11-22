@@ -103,7 +103,8 @@
   // the rest of the session. Nothing here depends on paymentsEnabled: the
   // columns are either in the schema or they are not.
   const BASE_ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at';
-  const PAY_ORDER_COLS = 'payment_status,amount_due,paid_at,fulfilment_type,delivery_fee,delivery_address';
+  const PAY_ORDER_COLS = 'payment_status,amount_due,paid_at,fulfilment_type,delivery_fee,delivery_address,' +
+    'delivery_zone_id,contact_name,contact_phone,customer_note,confirmed_parts_total';
   const NESTED_ORDER_COLS = 'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
     'order_events(event_type,from_status,to_status,note,created_at)';
 
@@ -133,8 +134,25 @@
   }
   PFSB.paymentColumnsPresent = () => payColsPresent;
 
-  PFSB.submitOrder = (vehicleLabel, items) =>
-    rest('/rpc/submit_order', { method: 'POST', body: { p_vehicle_label: vehicleLabel || '', p_items: items } });
+  // The server owns the delivery fee: we send a zone id, never an amount.
+  // Contact name/phone are snapshot onto the order so staff can reach the
+  // customer (the profiles table is owner-only under RLS).
+  PFSB.submitOrder = (vehicleLabel, items, opts = {}) =>
+    rest('/rpc/submit_order', { method: 'POST', body: {
+      p_vehicle_label: vehicleLabel || '',
+      p_items: items,
+      p_fulfilment_type: opts.fulfilmentType || 'pickup',
+      p_delivery_zone: opts.deliveryZone || null,
+      p_delivery_address: opts.deliveryAddress || null,
+      p_contact_name: opts.contactName || null,
+      p_contact_phone: opts.contactPhone || null,
+      p_note: opts.note || null
+    } });
+
+  // Delivery areas and their fees, as the server will charge them. The
+  // DELIVERY constant in data.js is only the offline/demo fallback.
+  PFSB.listDeliveryZones = () =>
+    rest('/delivery_zones?select=id,label,fee&active=is.true&order=sort_order.asc');
   PFSB.listOrders = () =>
     orderQuery(cols => '/orders?select=' + cols + '&order=created_at.desc');
   PFSB.getOrder = ref =>
@@ -198,6 +216,10 @@
     fulfilmentType: o.fulfilment_type || 'pickup',
     deliveryFee: Number(o.delivery_fee || 0),
     deliveryAddress: o.delivery_address || '',
+    confirmedPartsTotal: o.confirmed_parts_total == null ? null : Number(o.confirmed_parts_total),
+    contactName: o.contact_name || '',
+    contactPhone: o.contact_phone || '',
+    customerNote: o.customer_note || '',
     items: (o.order_items || []).map(i => ({
       name: i.product_name, short: i.part_number, qty: i.quantity,
       price: Number(i.confirmed_unit_price ?? i.provisional_unit_price ?? 0)

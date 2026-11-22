@@ -726,3 +726,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .deliveryFields .deliveryNote{color:var(--mu2);font-size:10.5px;line-height:1.45}
 .pfRefTotals{margin-top:10px;display:flex;gap:14px;justify-content:center;align-items:baseline;flex-wrap:wrap;font-size:12px;color:var(--mu)}
 .pfRefTotals b{color:var(--n);font-size:14px}
+
+/* ---- staff: customer contact + fulfilment on each order card ---- */
+.pfSContact{display:flex;flex-direction:column;gap:4px;margin:8px 0 2px;padding:10px 12px;
+  border:1px solid rgba(11,31,59,.10);border-radius:12px;background:rgba(11,31,59,.035);font-size:13.5px}
+.pfSContact b{color:var(--n)}
+.pfSContact a{color:var(--r);text-decoration:none;font-weight:700}
+.pfSContact a:hover{text-decoration:underline}
+.pfSDeliver{color:#1d4ed8}
+.pfSPickup{color:#3f6212}
+.pfSNote{color:#5b6472;font-style:italic}
+.pfApproveHint{margin:8px 0 0;font-size:12.5px;color:#5b6472}
+.pfApproveHint b{color:var(--n)}
