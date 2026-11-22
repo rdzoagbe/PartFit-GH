@@ -48,13 +48,25 @@
   }
   // Keep the fees the customer SEES in step with the fees the server CHARGES.
   // data.js is only the offline/demo fallback; delivery_zones is authoritative.
-  let zonesSynced=false;
-  function syncDeliveryZones(){
-    if(zonesSynced||!SB()||!window.PFSB.listDeliveryZones)return;
-    window.PFSB.listDeliveryZones().then(rows=>{
-      if(!Array.isArray(rows)||!rows.length)return;
+  // Any page that quotes a delivery fee calls this, so the whole app shows the
+  // prices the server will actually charge rather than the data.js fallback.
+  let zonesSynced=false, zonesInFlight=null;
+  P.syncZones=function(onReady){
+    if(zonesSynced){ if(onReady)onReady(false); return Promise.resolve(false); }
+    if(!SB()||!window.PFSB.listDeliveryZones){ if(onReady)onReady(false); return Promise.resolve(false); }
+    zonesInFlight=zonesInFlight||window.PFSB.listDeliveryZones();
+    return zonesInFlight.then(rows=>{
+      if(!Array.isArray(rows)||!rows.length){ if(onReady)onReady(false); return false; }
       zonesSynced=true;
+      const changed=JSON.stringify(DELIVERY.zones.map(z=>[z.id,z.fee]))!==JSON.stringify(rows.map(r=>[r.id,Number(r.fee)]));
       DELIVERY.zones=rows.map(r=>({id:r.id,label:r.label,fee:Number(r.fee)}));
+      if(onReady)onReady(changed);
+      return changed;
+    }).catch(()=>{ if(onReady)onReady(false); return false; });
+  };
+
+  function syncDeliveryZones(){
+    P.syncZones(()=>{
       const sel=document.getElementById('deliveryZone');
       if(!sel)return;
       const keep=sel.value;
@@ -62,7 +74,7 @@
         DELIVERY.zones.map(z=>`<option value="${safe(z.id)}">${safe(z.label)} — ${money(z.fee)}</option>`).join('');
       if(keep&&DELIVERY.zones.some(z=>z.id===keep))sel.value=keep;
       if(typeof recalcOrderTotals==='function')recalcOrderTotals();
-    }).catch(()=>{/* keep the data.js fallback */});
+    });
   }
 
   function cartPayNotice(){

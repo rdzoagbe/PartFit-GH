@@ -67,6 +67,14 @@
     return s.access_token;
   }
 
+  // Unauthenticated read of a publicly-readable table. RLS still applies — the
+  // anon role only sees what its policies allow.
+  async function restPublic(path) {
+    return parse(await fetch(BASE + '/rest/v1' + path, {
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+    }));
+  }
+
   async function rest(path, { method = 'GET', body, prefer } = {}) {
     const call = tok => fetch(BASE + '/rest/v1' + path, {
       method,
@@ -168,8 +176,11 @@
 
   // Delivery areas and their fees, as the server will charge them. The
   // DELIVERY constant in data.js is only the offline/demo fallback.
+  // Read with the anon key rather than a user token: the landing page quotes
+  // these fees to visitors who are not signed in, and delivery_zones has a
+  // public read policy for exactly that.
   PFSB.listDeliveryZones = () =>
-    rest('/delivery_zones?select=id,label,fee&active=is.true&order=sort_order.asc');
+    restPublic('/delivery_zones?select=id,label,fee&active=is.true&order=sort_order.asc');
   PFSB.listOrders = () =>
     orderQuery(cols => '/orders?select=' + cols + '&order=created_at.desc');
   PFSB.getOrder = ref =>

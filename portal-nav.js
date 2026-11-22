@@ -8,7 +8,7 @@
   const P = window.PFV3; if (!P) return;
 
   // bottom-nav roots never show a Back button
-  const ROOT = new Set(['home', 'catalogue', 'request', 'orders', 'account']);
+  const ROOT = new Set(['landing', 'home', 'catalogue', 'request', 'orders', 'account']);
   // logical parent for every sub-page
   const PARENT = {
     product: 'catalogue', vehicle: 'home', order: 'catalogue', track: 'orders',
@@ -19,7 +19,7 @@
   // if we've been deep-linked (e.g. a shared #product:… url), start from that page
   (() => {
     const h = (location.hash || '').slice(1).split(':')[0];
-    const M = { parts: 'catalogue', cart: 'order', product: 'product', vehicle: 'vehicle', track: 'track', orders: 'orders', account: 'account', request: 'request', login: 'login', signup: 'signup', faq: 'faq', contact: 'contact', privacy: 'privacy', terms: 'terms', returns: 'returns', delivery: 'delivery', fitment: 'fitment', staff: 'staff', home: 'home' };
+    const M = { start: 'landing', parts: 'catalogue', cart: 'order', product: 'product', vehicle: 'vehicle', track: 'track', orders: 'orders', account: 'account', request: 'request', login: 'login', signup: 'signup', faq: 'faq', contact: 'contact', privacy: 'privacy', terms: 'terms', returns: 'returns', delivery: 'delivery', fitment: 'fitment', staff: 'staff', home: 'home' };
     if (M[h]) P.cur = M[h];
   })();
 
