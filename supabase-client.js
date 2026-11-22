@@ -95,18 +95,45 @@
   };
 
   /* ---------- Orders ---------- */
-  const ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at,' +
-    'payment_status,amount_due,paid_at,fulfilment_type,' +
-    'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
+  // The payment/delivery columns only exist once backend/momo-paystack.sql has
+  // been applied. PostgREST answers a select naming an unknown column with 400
+  // (42703), which would take the whole orders screen down on a database that
+  // has not had that migration yet. So we ask for them, and if the server says
+  // they are not there we remember that and fall back to the base columns for
+  // the rest of the session. Nothing here depends on paymentsEnabled: the
+  // columns are either in the schema or they are not.
+  const BASE_ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at';
+  const PAY_ORDER_COLS = 'payment_status,amount_due,paid_at,fulfilment_type,delivery_fee,delivery_address';
+  const NESTED_ORDER_COLS = 'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
     'order_events(event_type,from_status,to_status,note,created_at)';
+
+  let payColsPresent = true; // flips to false the first time the server rejects them
+  const orderCols = () =>
+    BASE_ORDER_COLS + ',' + (payColsPresent ? PAY_ORDER_COLS + ',' : '') + NESTED_ORDER_COLS;
+  const unknownColumn = e =>
+    !!e && e.status === 400 &&
+    (((e.body || {}).code === '42703') || /column .* does not exist|unknown column/i.test(String(e.message || '')));
+
+  // buildPath(cols) -> request path. Retries once, without the payment columns,
+  // if the schema does not have them.
+  async function orderQuery(buildPath) {
+    try {
+      return await rest(buildPath(orderCols()));
+    } catch (e) {
+      if (!payColsPresent || !unknownColumn(e)) throw e;
+      payColsPresent = false;
+      return rest(buildPath(orderCols()));
+    }
+  }
+  PFSB.paymentColumnsPresent = () => payColsPresent;
 
   PFSB.submitOrder = (vehicleLabel, items) =>
     rest('/rpc/submit_order', { method: 'POST', body: { p_vehicle_label: vehicleLabel || '', p_items: items } });
   PFSB.listOrders = () =>
-    rest('/orders?select=' + ORDER_COLS + '&order=created_at.desc');
+    orderQuery(cols => '/orders?select=' + cols + '&order=created_at.desc');
   PFSB.getOrder = ref =>
-    rest('/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) + '&select=' + ORDER_COLS + '&limit=1')
-      .then(a => (a && a[0]) || null);
+    orderQuery(cols => '/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) +
+      '&select=' + cols + '&limit=1').then(a => (a && a[0]) || null);
 
   /* ---------- Payments (Paystack Mobile Money) ---------- */
   // Off by default; set PARTFIT_CONFIG.paymentsEnabled=true once the Paystack
@@ -128,7 +155,8 @@
     rest('/staff_roles?select=role&user_id=eq.' + encodeURIComponent((PFSB.user() || {}).id))
       .then(a => (a && a[0]) ? a[0].role : null).catch(() => null);
   PFSB.staffListOrders = status =>
-    rest('/orders?select=' + ORDER_COLS + (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+    orderQuery(cols => '/orders?select=' + cols +
+      (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
   PFSB.setOrderStatus = (ref, status, opts = {}) =>
     rest('/rpc/staff_set_order_status', { method: 'POST', body: {
       p_public_ref: ref, p_status: status,
@@ -162,6 +190,8 @@
     amountDue: o.amount_due == null ? null : Number(o.amount_due),
     paidAt: o.paid_at || null,
     fulfilmentType: o.fulfilment_type || 'pickup',
+    deliveryFee: Number(o.delivery_fee || 0),
+    deliveryAddress: o.delivery_address || '',
     items: (o.order_items || []).map(i => ({
       name: i.product_name, short: i.part_number, qty: i.quantity,
       price: Number(i.confirmed_unit_price ?? i.provisional_unit_price ?? 0)
