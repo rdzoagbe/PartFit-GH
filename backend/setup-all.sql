@@ -1,3 +1,17 @@
+-- ============================================================================
+-- !! RE-RUN ORDER MATTERS !!
+-- This file defines the ORIGINAL submit_order, staff_set_order_status and
+-- expire_partfit_approvals. backend/order-integrity.sql and
+-- backend/payment-safety.sql REPLACE them with versions that own the delivery
+-- fee, snapshot customer contact, reserve stock and guard payments.
+--
+-- So if you ever re-run this file on a live database, you MUST immediately
+-- re-run, in this order:
+--     backend/momo-paystack.sql
+--     backend/order-integrity.sql
+--     backend/payment-safety.sql
+-- Otherwise delivery stops being charged and stock stops being reserved.
+-- ============================================================================
 -- =============================================================================
 -- PartFit Ghana — one-shot Supabase setup (idempotent, safe to re-run).
 -- Paste this whole file into the Supabase SQL Editor and press Run ONCE.
@@ -218,14 +232,19 @@ end $$;
 revoke all on function public.staff_set_order_status(text,text,numeric,text,int) from public;
 grant execute on function public.staff_set_order_status(text,text,numeric,text,int) to authenticated;
 
+-- Staff-triggered sweep. Kept as a thin wrapper so there is ONE expiry
+-- implementation: the system version in backend/order-integrity.sql, which
+-- skips paid / in-flight payments and releases the stock the order was
+-- holding. This used to be a second, unguarded copy that expired paid orders
+-- and leaked reserved inventory.
 create or replace function public.expire_partfit_approvals()
 returns integer language plpgsql security definer set search_path=public as $$
-declare n int;
 begin
   if not public.is_partfit_staff() then raise exception 'Staff access required'; end if;
-  with expired as (update public.orders set status='expired',updated_at=now() where status='approved' and reservation_expires_at<now() returning id)
-  select count(*) into n from expired;
-  return n;
+  if to_regprocedure('public.expire_partfit_approvals_system()') is null then
+    raise exception 'Apply backend/order-integrity.sql first';
+  end if;
+  return public.expire_partfit_approvals_system();
 end $$;
 revoke all on function public.expire_partfit_approvals() from public;
 grant execute on function public.expire_partfit_approvals() to authenticated;
@@ -241,7 +260,10 @@ insert into public.products(id,brand,name,part_number,category,current_price,sto
 ('brake-rear','Aftermarket','Rear Brake Pad Set — Sample Application','PF-BP-201','Brake Pads',110,5,'confirm'),
 ('conti-6pk1029','Continental','Continental 6PK1029 ELAST Multi-V Belt','6PK1029 ELAST','Belts',140,9,'catalog'),
 ('conti-6pk1059','Continental','Continental 6PK1059 ELAST Multi-V Belt','6PK1059 ELAST','Belts',150,6,'catalog')
-on conflict(id) do update set brand=excluded.brand,name=excluded.name,part_number=excluded.part_number,category=excluded.category,current_price=excluded.current_price,stock_qty=excluded.stock_qty,fitment_level=excluded.fitment_level,updated_at=now();
+-- Seed only. Deliberately does NOT overwrite current_price or stock_qty: on a
+-- live shop those are real figures that staff maintain, and re-running this
+-- file used to reset them to the demo values.
+on conflict(id) do update set brand=excluded.brand,name=excluded.name,part_number=excluded.part_number,category=excluded.category,fitment_level=excluded.fitment_level,updated_at=now();
 
 -- ---------- Indexes ----------
 create index if not exists idx_partfit_vehicles_owner on public.vehicles(owner_id);

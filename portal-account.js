@@ -86,7 +86,16 @@
 
   /* ---- dashboard ---- */
   let shownCars = [];
-  function orderRow(o) { return `<div class="pfRow"><div class="ico">📦</div><div class="mid"><b>${P.esc(o.id)}</b><small>${P.fmt(o.createdAt)} · ${P.esc(P.steps[o.stage] || P.steps[0])}</small></div><div class="amt">${money(Number(o.total || 0))}</div><button class="go" data-v3-track="${P.esc(o.id)}">Track</button></div>`; }
+  function orderRow(o) {
+    // Rejected/cancelled/expired are not in PFSB.STATUS_STEP, so `stage` falls
+    // back to 0 — never label those "Order submitted".
+    const ended = (P.ENDED || {})[o.status];
+    const label = ended ? ended[0] : ((P.stepsFor ? P.stepsFor(o) : P.steps)[o.stage] || P.steps[0]);
+    const amount = o.confirmedTotal != null
+      ? Number(o.confirmedTotal)
+      : Number(o.provisionalTotal ?? o.total ?? 0) + Number(o.deliveryFee || 0);
+    return `<div class="pfRow${ended ? ' pfRowEnded' : ''}"><div class="ico">${ended ? '✕' : '📦'}</div><div class="mid"><b>${P.esc(o.id)}</b><small>${P.fmt(o.createdAt)} · ${P.esc(label)}</small></div><div class="amt">${money(amount)}</div><button class="go" data-v3-track="${P.esc(o.id)}">Track</button></div>`;
+  }
   function carRow(c, i) { return `<div class="pfRow"><div class="ico">🚗</div><div class="mid"><b>${P.esc(c.make + ' ' + c.model)}</b><small>${P.esc([c.year, c.engine].filter(Boolean).join(' · '))}</small></div><button class="go" data-garage-use="${i}">Shop</button><button class="rm" data-garage-remove="${i}" aria-label="Remove vehicle">×</button></div>`; }
 
   function renderDash(p, orders, cars, demoMode, staffRole) {

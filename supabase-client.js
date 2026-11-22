@@ -67,6 +67,14 @@
     return s.access_token;
   }
 
+  // Unauthenticated read of a publicly-readable table. RLS still applies — the
+  // anon role only sees what its policies allow.
+  async function restPublic(path) {
+    return parse(await fetch(BASE + '/rest/v1' + path, {
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+    }));
+  }
+
   async function rest(path, { method = 'GET', body, prefer } = {}) {
     const call = tok => fetch(BASE + '/rest/v1' + path, {
       method,
@@ -95,18 +103,89 @@
   };
 
   /* ---------- Orders ---------- */
-  const ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at,' +
-    'payment_status,amount_due,paid_at,fulfilment_type,' +
-    'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
+  // The payment/delivery columns only exist once backend/momo-paystack.sql has
+  // been applied. PostgREST answers a select naming an unknown column with 400
+  // (42703), which would take the whole orders screen down on a database that
+  // has not had that migration yet. So we ask for them, and if the server says
+  // they are not there we remember that and fall back to the base columns for
+  // the rest of the session. Nothing here depends on paymentsEnabled: the
+  // columns are either in the schema or they are not.
+  const BASE_ORDER_COLS = 'id,public_ref,status,provisional_total,confirmed_total,created_at,vehicle_label,reservation_expires_at';
+  const PAY_ORDER_COLS = 'payment_status,amount_due,paid_at,fulfilment_type,delivery_fee,delivery_address,' +
+    'delivery_zone_id,contact_name,contact_phone,customer_note,confirmed_parts_total';
+  const NESTED_ORDER_COLS = 'order_items(product_name,part_number,quantity,provisional_unit_price,confirmed_unit_price),' +
     'order_events(event_type,from_status,to_status,note,created_at)';
 
-  PFSB.submitOrder = (vehicleLabel, items) =>
-    rest('/rpc/submit_order', { method: 'POST', body: { p_vehicle_label: vehicleLabel || '', p_items: items } });
+  let payColsPresent = true; // flips to false the first time the server rejects them
+  const orderCols = withPay =>
+    BASE_ORDER_COLS + ',' + (withPay ? PAY_ORDER_COLS + ',' : '') + NESTED_ORDER_COLS;
+  const unknownColumn = e =>
+    !!e && e.status === 400 &&
+    (((e.body || {}).code === '42703') || /column .* does not exist|unknown column/i.test(String(e.message || '')));
+
+  // buildPath(cols) -> request path. Retries once, without the payment columns,
+  // if the schema does not have them. The retry decision is made from what THIS
+  // request actually asked for, not from the shared flag: two queries can be in
+  // flight together (Account -> My Orders, or switching staff tabs during the
+  // first load), and the first failure flips the flag before the second one
+  // lands, which would otherwise leave the second query rejected with the
+  // fallback already available.
+  async function orderQuery(buildPath) {
+    const withPay = payColsPresent;
+    try {
+      return await rest(buildPath(orderCols(withPay)));
+    } catch (e) {
+      if (!withPay || !unknownColumn(e)) throw e;
+      payColsPresent = false;
+      return rest(buildPath(orderCols(false)));
+    }
+  }
+  PFSB.paymentColumnsPresent = () => payColsPresent;
+
+  // The server owns the delivery fee: we send a zone id, never an amount.
+  // Contact name/phone are snapshot onto the order so staff can reach the
+  // customer (the profiles table is owner-only under RLS).
+  // If the database has not had backend/order-integrity.sql applied, this
+  // signature does not exist and PostgREST answers PGRST202. Unlike reading
+  // orders, there is no safe fallback — an order submitted without its
+  // delivery and contact details would be unfulfillable — so fail loudly with
+  // something a customer can act on instead of a raw Postgres error.
+  const schemaDrift = e =>
+    !!e && (((e.body || {}).code === 'PGRST202') ||
+      /could not find the function|does not exist/i.test(String(e.message || '')));
+
+  PFSB.submitOrder = (vehicleLabel, items, opts = {}) =>
+    rest('/rpc/submit_order', { method: 'POST', body: {
+      p_vehicle_label: vehicleLabel || '',
+      p_items: items,
+      p_fulfilment_type: opts.fulfilmentType || 'pickup',
+      p_delivery_zone: opts.deliveryZone || null,
+      p_delivery_address: opts.deliveryAddress || null,
+      p_contact_name: opts.contactName || null,
+      p_contact_phone: opts.contactPhone || null,
+      p_note: opts.note || null
+    } }).catch(e => {
+      if (schemaDrift(e)) {
+        console.error('submit_order signature missing — apply backend/order-integrity.sql', e);
+        const err = new Error('The shop’s order system needs a database update. Please send this order on WhatsApp instead, or try again shortly.');
+        err.schemaDrift = true;
+        throw err;
+      }
+      throw e;
+    });
+
+  // Delivery areas and their fees, as the server will charge them. The
+  // DELIVERY constant in data.js is only the offline/demo fallback.
+  // Read with the anon key rather than a user token: the landing page quotes
+  // these fees to visitors who are not signed in, and delivery_zones has a
+  // public read policy for exactly that.
+  PFSB.listDeliveryZones = () =>
+    restPublic('/delivery_zones?select=id,label,fee&active=is.true&order=sort_order.asc');
   PFSB.listOrders = () =>
-    rest('/orders?select=' + ORDER_COLS + '&order=created_at.desc');
+    orderQuery(cols => '/orders?select=' + cols + '&order=created_at.desc');
   PFSB.getOrder = ref =>
-    rest('/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) + '&select=' + ORDER_COLS + '&limit=1')
-      .then(a => (a && a[0]) || null);
+    orderQuery(cols => '/orders?public_ref=eq.' + encodeURIComponent(String(ref || '').toUpperCase().trim()) +
+      '&select=' + cols + '&limit=1').then(a => (a && a[0]) || null);
 
   /* ---------- Payments (Paystack Mobile Money) ---------- */
   // Off by default; set PARTFIT_CONFIG.paymentsEnabled=true once the Paystack
@@ -123,12 +202,50 @@
     return parse(res);
   };
 
+  // Clear an abandoned checkout so the Pay button comes back. The server only
+  // clears intents older than 15 minutes with no successful payment attached.
+  PFSB.releaseStalePayment = ref =>
+    rest('/rpc/release_stale_payment_intent', { method: 'POST', body: { p_public_ref: ref } });
+
+  /* ---------- Lead capture (Request a Part / Contact) ---------- */
+  // Open to signed-out visitors, so it goes through restPublic unless there is
+  // a session (in which case the lead is linked to the account).
+  PFSB.submitPartRequest = async lead => {
+    const body = {
+      p_kind: lead.kind || 'part_request', p_name: lead.name || '', p_phone: lead.phone || '',
+      p_email: lead.email || null, p_subject: lead.subject || null,
+      p_vehicle_label: lead.vehicle || null, p_part_number: lead.partNumber || null,
+      p_details: lead.details || {}
+    };
+    if (PFSB.signedIn()) return rest('/rpc/submit_part_request', { method: 'POST', body });
+    return parse(await fetch(BASE + '/rest/v1/rpc/submit_part_request', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }));
+  };
+  PFSB.staffListRequests = status =>
+    rest('/part_requests?select=id,kind,name,phone,email,subject,vehicle_label,part_number,details,status,staff_note,created_at' +
+      (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+  PFSB.staffSetRequestStatus = (id, status, note) =>
+    rest('/rpc/staff_set_request_status', { method: 'POST', body: { p_id: id, p_status: status, p_note: note || null } });
+
   /* ---------- Staff ---------- */
   PFSB.isStaff = () =>
     rest('/staff_roles?select=role&user_id=eq.' + encodeURIComponent((PFSB.user() || {}).id))
       .then(a => (a && a[0]) ? a[0].role : null).catch(() => null);
   PFSB.staffListOrders = status =>
-    rest('/orders?select=' + ORDER_COLS + (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+    orderQuery(cols => '/orders?select=' + cols +
+      (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+  // Cash / direct MoMo at the counter, or a Paystack charge whose webhook never
+  // arrived. Server-side: staff only, and it refuses less than the amount due.
+  PFSB.recordManualPayment = (ref, amount, channel, note) =>
+    rest('/rpc/staff_record_manual_payment', { method: 'POST', body: {
+      p_public_ref: ref, p_amount: amount, p_channel: channel || 'cash', p_note: note || null } });
+  PFSB.recordRefund = (ref, amount, note) =>
+    rest('/rpc/staff_record_refund', { method: 'POST', body: {
+      p_public_ref: ref, p_amount: amount, p_note: note || null } });
+
   PFSB.setOrderStatus = (ref, status, opts = {}) =>
     rest('/rpc/staff_set_order_status', { method: 'POST', body: {
       p_public_ref: ref, p_status: status,
@@ -162,6 +279,12 @@
     amountDue: o.amount_due == null ? null : Number(o.amount_due),
     paidAt: o.paid_at || null,
     fulfilmentType: o.fulfilment_type || 'pickup',
+    deliveryFee: Number(o.delivery_fee || 0),
+    deliveryAddress: o.delivery_address || '',
+    confirmedPartsTotal: o.confirmed_parts_total == null ? null : Number(o.confirmed_parts_total),
+    contactName: o.contact_name || '',
+    contactPhone: o.contact_phone || '',
+    customerNote: o.customer_note || '',
     items: (o.order_items || []).map(i => ({
       name: i.product_name, short: i.part_number, qty: i.quantity,
       price: Number(i.confirmed_unit_price ?? i.provisional_unit_price ?? 0)

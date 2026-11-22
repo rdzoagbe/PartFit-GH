@@ -110,9 +110,11 @@
         <div class="field"><label>VIN / chassis <small>(optional)</small></label><input id="reqVIN" placeholder="Useful for exact fitment"></div>
         <div class="field"><label>Quantity</label><select id="reqQty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select></div>
         <div class="field"><label>Notes</label><textarea id="reqNote" placeholder="Front/rear, dimensions, brand preference, urgency, anything printed on the old part…"></textarea></div>
+        <div class="field"><label>Your name *</label><input id="reqName" autocomplete="name" value="${safe(pf.name||(window.PFV3&&PFV3.profile&&(PFV3.profile()||{}).name)||'')}" placeholder="So we know who to reply to"></div>
+        <div class="field"><label>Phone / WhatsApp *</label><input id="reqPhone" type="tel" inputmode="tel" autocomplete="tel" value="${safe(pf.phone||(window.PFV3&&PFV3.profile&&(PFV3.profile()||{}).phone)||'')}" placeholder="+233 …"></div>
         <div class="photoHelp"><span>📷</span><div><b>Have a photo?</b><p>After WhatsApp opens, attach clear photos of the old part, box label or VIN plate. This reduces identification mistakes.</p></div></div>
-        ${honeypotField()}<button class="btn wa full big" data-request-submit>Send Request on WhatsApp</button>
-        <p class="secureNote">No account required. The form is turned into a WhatsApp message only when you tap Send.</p>
+        ${honeypotField()}<button class="btn wa full big" data-request-submit>Send Request</button>
+        <p class="secureNote">No account required. We save your request so we can reply even if WhatsApp does not open.</p>
       </section>
       <section class="sec card requestTips">
         <h2>Best information to send</h2>
@@ -132,12 +134,23 @@
     if(!btn) return;
     e.preventDefault();
     if(typeof honeypotTripped==='function'&&honeypotTripped()){say('Request sent');return}
-    if(typeof submitAllowed==='function'&&!submitAllowed('request')){say('Please wait a moment before sending again');return}
     const val=id=>(document.getElementById(id)?.value||'').trim();
     const part=val('reqPart');
     if(!part){const el=document.getElementById('reqPart');if(typeof fieldError==='function'){fieldError(el,'Tell us which part you need');say('Please check the highlighted field');}else say('Tell us which part you need');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}return}
     const make=val('reqMake'), model=val('reqModel'), year=val('reqYear'), engine=val('reqEngine');
     const oe=val('reqOE'), vin=val('reqVIN'), qty=val('reqQty')||'1', note=val('reqNote');
+    const name=val('reqName'); let phone=val('reqPhone');
+    // We cannot answer a request we cannot reply to.
+    let badContact=null;
+    if(!name){const el=document.getElementById('reqName');if(typeof fieldError==='function')fieldError(el,'Tell us your name');badContact=badContact||el;}
+    if(!phone){const el=document.getElementById('reqPhone');if(typeof fieldError==='function')fieldError(el,'Add a phone / WhatsApp number');badContact=badContact||el;}
+    else if(typeof validPhone==='function'&&!validPhone(phone)){const el=document.getElementById('reqPhone');if(typeof fieldError==='function')fieldError(el,'Enter a valid phone number');badContact=badContact||el;}
+    if(badContact){say('Please check the highlighted fields');badContact.focus();badContact.scrollIntoView({behavior:'smooth',block:'center'});return}
+    if(typeof formatGhPhone==='function'){phone=formatGhPhone(phone);const el=document.getElementById('reqPhone');if(el)el.value=phone;}
+    // Rate-limit only a submission that is actually going to be sent. Checking
+    // before validation meant a rejected attempt burned the cooldown, so the
+    // customer fixed the highlighted field, tapped again and was told to wait.
+    if(typeof submitAllowed==='function'&&!submitAllowed('request')){say('Please wait a moment before sending again');return}
     const msg=[
       'Hello PartFit Ghana, I would like help identifying a part.',
       '',
@@ -150,7 +163,21 @@
       '',
       'I can attach photos in WhatsApp if needed. Please confirm the exact fitment, availability and price.'
     ].filter(Boolean).join('\n');
-    whatsapp(msg);
+    // Save the lead FIRST. The WhatsApp handoff is best-effort: the app may be
+    // missing, window.open is often blocked on Android, and until the business
+    // number is configured whatsapp() only copies to the clipboard. Before
+    // this, any of those meant the request reached nobody at all.
+    const vehicle=[make,model,year,engine].filter(Boolean).join(' · ');
+    const lead={kind:'part_request',name,phone,subject:part,vehicle,partNumber:oe,
+      details:{quantity:qty,vin,note,source:'request-form'}};
+    const hand=()=>whatsapp(msg);
+    if(window.PFSB&&window.PFSB.configured()&&window.PFSB.submitPartRequest){
+      btn.disabled=true; const orig=btn.textContent; btn.textContent='Sending…';
+      window.PFSB.submitPartRequest(lead)
+        .then(()=>{say('Request received — we’ll reply on WhatsApp');hand();})
+        .catch(err=>{say(err.message||'Could not save your request — sending on WhatsApp instead');hand();})
+        .finally(()=>{btn.disabled=false;btn.textContent=orig;});
+    } else hand();
   });
 
   document.addEventListener('click',e=>{

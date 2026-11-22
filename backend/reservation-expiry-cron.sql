@@ -25,29 +25,11 @@ create extension if not exists pg_cron;
 -- It can only move orders that are already 'approved' AND past their own
 -- reservation_expires_at into 'expired', releasing the held stock, and records
 -- an audit event for each one.
-create or replace function public.expire_partfit_approvals_system()
-returns integer
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare n int := 0;
-begin
-  with expired as (
-    update public.orders
-       set status = 'expired', updated_at = now()
-     where status = 'approved'
-       and reservation_expires_at is not null
-       and reservation_expires_at < now()
-    returning id
-  )
-  insert into public.order_events(order_id, actor_id, event_type, from_status, to_status, note)
-  select id, null, 'expired', 'approved', 'expired',
-         'Reservation window elapsed; order expired automatically and stock released.'
-    from expired;
-  get diagnostics n = row_count;
-  return n;
-end $$;
+-- The function itself now lives in backend/order-integrity.sql, which is the
+-- version that skips paid / in-flight payments and releases reserved stock.
+-- It used to be defined HERE as well, which meant running this file after
+-- order-integrity.sql silently reverted both of those safeguards — expiring
+-- paid orders and leaking the stock they were holding. Do not redefine it here.
 
 -- Only the database/cron owner runs this; never customers or staff clients.
 revoke all on function public.expire_partfit_approvals_system() from public, anon, authenticated;
