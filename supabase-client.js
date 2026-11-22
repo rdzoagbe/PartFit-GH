@@ -207,6 +207,29 @@
   PFSB.releaseStalePayment = ref =>
     rest('/rpc/release_stale_payment_intent', { method: 'POST', body: { p_public_ref: ref } });
 
+  /* ---------- Lead capture (Request a Part / Contact) ---------- */
+  // Open to signed-out visitors, so it goes through restPublic unless there is
+  // a session (in which case the lead is linked to the account).
+  PFSB.submitPartRequest = async lead => {
+    const body = {
+      p_kind: lead.kind || 'part_request', p_name: lead.name || '', p_phone: lead.phone || '',
+      p_email: lead.email || null, p_subject: lead.subject || null,
+      p_vehicle_label: lead.vehicle || null, p_part_number: lead.partNumber || null,
+      p_details: lead.details || {}
+    };
+    if (PFSB.signedIn()) return rest('/rpc/submit_part_request', { method: 'POST', body });
+    return parse(await fetch(BASE + '/rest/v1/rpc/submit_part_request', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }));
+  };
+  PFSB.staffListRequests = status =>
+    rest('/part_requests?select=id,kind,name,phone,email,subject,vehicle_label,part_number,details,status,staff_note,created_at' +
+      (status && status !== 'all' ? '&status=eq.' + status : '') + '&order=created_at.desc');
+  PFSB.staffSetRequestStatus = (id, status, note) =>
+    rest('/rpc/staff_set_request_status', { method: 'POST', body: { p_id: id, p_status: status, p_note: note || null } });
+
   /* ---------- Staff ---------- */
   PFSB.isStaff = () =>
     rest('/staff_roles?select=role&user_id=eq.' + encodeURIComponent((PFSB.user() || {}).id))

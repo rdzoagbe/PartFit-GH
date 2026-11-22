@@ -18,6 +18,7 @@ Then run these, **in this order** — all are idempotent:
 | `backend/order-integrity.sql` | server-owned delivery pricing, customer contact on the order, stock reservation | Yes — without it **every order submission fails**, delivery is never charged and stock can be oversold |
 | `backend/payment-safety.sql` | underpayment/refund handling, recording a payment the webhook missed, clearing an abandoned checkout | Yes before taking money |
 | `backend/reservation-expiry-cron.sql` | schedules the 15-minute expiry sweep (needs pg_cron enabled) | Yes once stock is reserved, or abandoned reservations hold stock forever |
+| `backend/lead-capture.sql` | stores Request-a-Part and Contact enquiries so they survive a failed WhatsApp handoff | Yes — otherwise those forms reach nobody |
 
 `backend/order-integrity.sql` replaces `submit_order`, `staff_set_order_status`
 and `expire_partfit_approvals_system` with versions that: look the delivery fee

@@ -5,7 +5,8 @@
 (() => {
   const P = window.PFV3;
   const SB = () => window.PFSB && window.PFSB.configured() && window.PFSB.signedIn();
-  const TABS = [['submitted', 'New'], ['reviewing', 'Reviewing'], ['approved', 'Approved'], ['ready_for_collection', 'Ready'], ['all', 'All']];
+  const TABS = [['submitted', 'New'], ['reviewing', 'Reviewing'], ['approved', 'Approved'], ['ready_for_collection', 'Ready'], ['all', 'All'], ['requests', 'Requests']];
+  const REQ_LABEL = { new: 'New', in_progress: 'In progress', answered: 'Answered', closed: 'Closed' };
   const LABEL = { submitted: 'Submitted', reviewing: 'Reviewing', approved: 'Approved', ready_for_collection: 'Ready for collection', collected: 'Collected', rejected: 'Rejected', cancelled: 'Cancelled', expired: 'Expired' };
   const TONE = { submitted: 'new', reviewing: 'rev', approved: 'app', ready_for_collection: 'rdy', collected: 'done', rejected: 'bad', cancelled: 'bad', expired: 'bad' };
   let curTab = 'submitted';
@@ -84,6 +85,38 @@
     </article>`;
   }
 
+  // Part requests and contact messages — the enquiries that used to vanish into
+  // an unsent WhatsApp message.
+  function requestCard(r) {
+    const d = r.details || {};
+    const extra = [
+      d.quantity ? 'Qty ' + P.esc(String(d.quantity)) : '',
+      d.vin ? 'VIN ' + P.esc(d.vin) : '',
+      r.part_number ? 'OE ' + P.esc(r.part_number) : ''
+    ].filter(Boolean).join(' · ');
+    const body = P.esc(d.note || d.message || '');
+    const phone = r.phone || '';
+    return `<article class="card pfStaffCard">
+      <div class="pfSHead">
+        <div><span class="pfSStatus ${r.status === 'new' ? 'new' : r.status === 'closed' ? 'done' : 'rev'}">${P.esc(REQ_LABEL[r.status] || r.status)}</span>
+          <span class="pfReqKind">${r.kind === 'contact' ? 'Message' : 'Part request'}</span></div>
+        <div class="pfSDate mono">${P.fmt(r.created_at)}</div>
+      </div>
+      <div class="pfSVeh">${P.esc(r.subject || '(no subject)')}</div>
+      <div class="pfSContact">
+        <span class="pfSWho"><b>${P.esc(r.name)}</b>${phone ? ` · <a class="mono" href="tel:${P.esc(phone.replace(/[^+0-9]/g, ''))}">${P.esc(phone)}</a>` : ''}</span>
+        ${r.vehicle_label ? `<span>${P.esc(r.vehicle_label)}</span>` : ''}
+        ${extra ? `<span class="pfSNote">${extra}</span>` : ''}
+        ${body ? `<span class="pfSNote">${body}</span>` : ''}
+      </div>
+      <div class="pfSFoot"><div></div><div class="pfStaffActions">
+        ${r.status !== 'answered' && r.status !== 'closed'
+          ? `<button class="btn dark" data-req-set="${P.esc(r.id)}" data-status="answered">Mark answered</button>` : ''}
+        ${r.status !== 'closed' ? `<button class="btn ghostLine" data-req-set="${P.esc(r.id)}" data-status="closed">Close</button>` : ''}
+      </div></div>
+    </article>`;
+  }
+
   function shell(bodyHTML) {
     app.innerHTML = appHeader('Staff console', 'Approvals · fitment · stock') + `<main class="page pfStaff">
       <section class="v3OrdersHero"><div><span class="sectionKicker">STAFF</span><h1>Order approvals</h1><p>Review fitment and stock, approve with the final price, then move each order to collection. Every change is logged server-side.</p></div></section>
@@ -103,7 +136,20 @@
     shell(list.length ? list.map(card).join('') : info('✓', 'Nothing here', 'No orders in this queue right now.'));
   }
 
+  function renderRequests(state) {
+    if (state === 'loading') return shell(`<article class="card pfStaffCard skWrap"><span class="sk skLine" style="width:34%;height:12px"></span><span class="sk skLine" style="width:54%;height:15px;margin-top:11px"></span></article>`);
+    if (state && state.error) return shell(info('⚠️', 'Couldn’t load requests', P.esc(state.error), '<button class="btn outlineNavy" data-staff-tab="requests">Try again</button>'));
+    const list = state || [];
+    shell(list.length ? list.map(requestCard).join('')
+      : info('✓', 'No open requests', 'Part requests and contact messages land here.'));
+  }
+
   function load() {
+    if (curTab === 'requests') {
+      renderRequests('loading');
+      window.PFSB.staffListRequests('all').then(a => renderRequests(a)).catch(e => renderRequests({ error: e.message || 'Network error' }));
+      return;
+    }
     renderList('loading');
     window.PFSB.staffListOrders(curTab).then(a => renderList(a)).catch(e => renderList({ error: e.message || 'Network error' }));
   }
@@ -137,6 +183,16 @@
       window.PFSB.setOrderStatus(ref, 'approved', { confirmedTotal: price, note })
         .then(() => { say('Order ' + ref + ' approved'); load(); })
         .catch(err => { conf.disabled = false; conf.textContent = 'Confirm approval'; say(err.message || 'Could not approve'); });
+      return;
+    }
+
+    const rq = e.target.closest('[data-req-set]');
+    if (rq) {
+      const id = rq.dataset.reqSet, status = rq.dataset.status;
+      rq.disabled = true;
+      window.PFSB.staffSetRequestStatus(id, status)
+        .then(() => { say('Request ' + (REQ_LABEL[status] || status).toLowerCase()); load(); })
+        .catch(err => { rq.disabled = false; say(err.message || 'Could not update the request'); });
       return;
     }
 

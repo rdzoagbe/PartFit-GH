@@ -30,7 +30,7 @@ run_suite() {
 }
 
 fail=0
-for suite in backend/tests/10-order-delivery-contact.sql backend/tests/11-stock-payment-expiry.sql backend/tests/12-payment-safety.sql backend/tests/13-migration-order.sql; do
+for suite in backend/tests/10-order-delivery-contact.sql backend/tests/11-stock-payment-expiry.sql backend/tests/12-payment-safety.sql backend/tests/13-migration-order.sql backend/tests/14-lead-capture.sql; do
   # each suite gets a clean schema
   "${PSQL[@]}" -c 'drop schema if exists public cascade; create schema public; drop schema if exists auth cascade; drop schema if exists cron cascade;'
   apply backend/tests/00-harness.sql
@@ -38,6 +38,7 @@ for suite in backend/tests/10-order-delivery-contact.sql backend/tests/11-stock-
   apply backend/momo-paystack.sql
   apply backend/order-integrity.sql
   apply backend/payment-safety.sql
+  apply backend/lead-capture.sql
   apply_cron
   run_suite "$suite" || fail=1
 done
