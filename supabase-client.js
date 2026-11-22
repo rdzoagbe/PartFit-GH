@@ -108,21 +108,27 @@
     'order_events(event_type,from_status,to_status,note,created_at)';
 
   let payColsPresent = true; // flips to false the first time the server rejects them
-  const orderCols = () =>
-    BASE_ORDER_COLS + ',' + (payColsPresent ? PAY_ORDER_COLS + ',' : '') + NESTED_ORDER_COLS;
+  const orderCols = withPay =>
+    BASE_ORDER_COLS + ',' + (withPay ? PAY_ORDER_COLS + ',' : '') + NESTED_ORDER_COLS;
   const unknownColumn = e =>
     !!e && e.status === 400 &&
     (((e.body || {}).code === '42703') || /column .* does not exist|unknown column/i.test(String(e.message || '')));
 
   // buildPath(cols) -> request path. Retries once, without the payment columns,
-  // if the schema does not have them.
+  // if the schema does not have them. The retry decision is made from what THIS
+  // request actually asked for, not from the shared flag: two queries can be in
+  // flight together (Account -> My Orders, or switching staff tabs during the
+  // first load), and the first failure flips the flag before the second one
+  // lands, which would otherwise leave the second query rejected with the
+  // fallback already available.
   async function orderQuery(buildPath) {
+    const withPay = payColsPresent;
     try {
-      return await rest(buildPath(orderCols()));
+      return await rest(buildPath(orderCols(withPay)));
     } catch (e) {
-      if (!payColsPresent || !unknownColumn(e)) throw e;
+      if (!withPay || !unknownColumn(e)) throw e;
       payColsPresent = false;
-      return rest(buildPath(orderCols()));
+      return rest(buildPath(orderCols(false)));
     }
   }
   PFSB.paymentColumnsPresent = () => payColsPresent;
