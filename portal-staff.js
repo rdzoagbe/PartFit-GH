@@ -11,6 +11,67 @@
   const TONE = { submitted: 'new', reviewing: 'rev', approved: 'app', ready_for_collection: 'rdy', collected: 'done', rejected: 'bad', cancelled: 'bad', expired: 'bad' };
   let curTab = 'submitted';
 
+  /* ---- new-order awareness ------------------------------------------------
+     Before this, load() ran only on page render or a tab tap, so an order
+     placed at 7pm sat unseen until the owner happened to sign in, open Account
+     and tap Staff console — while the customer's tracker said "awaiting
+     review" and the reservation clock had not started. Three things now:
+       1. the console refreshes itself while it is the current page,
+       2. an order that arrives while you are looking announces itself,
+       3. orders that arrived while the console was closed are counted, so the
+          Account dashboard can badge them.
+     This is the no-setup layer; email and phone push are sent server-side. */
+  const SEEN_KEY = 'pfStaffSeenV1';          // newest created_at the owner has looked at
+  const SOUND_KEY = 'pfStaffSoundV1';
+  const POLL_MS = 25000;
+  let pollTimer = null, knownRefs = null, freshRefs = new Set();
+
+  const seenAt = () => { try { return localStorage.getItem(SEEN_KEY) || ''; } catch { return ''; } };
+  const soundOn = () => { try { return localStorage.getItem(SOUND_KEY) !== 'off'; } catch { return true; } };
+  function markSeen(rows) {
+    const newest = (rows || []).reduce((m, o) => (o.created_at > m ? o.created_at : m), '');
+    try { if (newest && newest > seenAt()) localStorage.setItem(SEEN_KEY, newest); } catch { /* private mode */ }
+  }
+  // Orders that landed since the owner last had the queue open. Exported so the
+  // Account dashboard can badge the Staff console button without duplicating it.
+  P.staffUnseenCount = rows => { const s = seenAt(); return (rows || []).filter(o => o.created_at > s).length; };
+
+  function ping() {
+    if (!soundOn()) return;
+    try { navigator.vibrate && navigator.vibrate(180); } catch { /* unsupported */ }
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return;
+      const ctx = new Ctx(), osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = 880; gain.gain.value = 0.05;
+      osc.connect(gain); gain.connect(ctx.destination); osc.start();
+      setTimeout(() => { try { osc.stop(); ctx.close(); } catch { /* already closed */ } }, 170);
+    } catch { /* autoplay policy — the toast and badge still fire */ }
+  }
+
+  // Announce anything that was not in the previous snapshot of this tab.
+  function noticeArrivals(rows) {
+    const refs = new Set((rows || []).map(o => o.public_ref));
+    if (knownRefs === null) { knownRefs = refs; freshRefs = new Set(); return; }
+    freshRefs = new Set([...refs].filter(r => !knownRefs.has(r)));
+    knownRefs = refs;
+    if (freshRefs.size) {
+      say(freshRefs.size === 1 ? 'New order received' : freshRefs.size + ' new orders received');
+      ping();
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(() => {
+      // Guard on the DOM, not on router state: if the console is no longer on
+      // screen we have navigated away, whatever any bookkeeping says.
+      if (!document.querySelector('.pfStaffLive')) { stopPolling(); return; }
+      if (document.hidden) return;                        // backgrounded tab
+      quietRefresh();
+    }, POLL_MS);
+  }
+  function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
   const gh = n => 'GH₵ ' + Number(n || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const payEnabled = () => !!(window.PFSB && window.PFSB.paymentsEnabled && window.PFSB.paymentsEnabled());
 
@@ -63,9 +124,9 @@
         : '<span class="pfSPickup"><b>Pickup</b> → Spintex</span>'}
       ${o.customer_note ? `<span class="pfSNote">Note: ${P.esc(o.customer_note)}</span>` : ''}
     </div>`;
-    return `<article class="card pfStaffCard">
+    return `<article class="card pfStaffCard${freshRefs.has(o.public_ref) ? ' isFresh' : ''}">
       <div class="pfSHead">
-        <div><span class="orderRef mono">${ref}</span><span class="pfSStatus ${TONE[o.status] || 'new'}">${LABEL[o.status] || o.status}</span>${payBadge(o)}</div>
+        <div><span class="orderRef mono">${ref}</span>${freshRefs.has(o.public_ref) ? '<span class="pfSNew">NEW</span>' : ''}<span class="pfSStatus ${TONE[o.status] || 'new'}">${LABEL[o.status] || o.status}</span>${payBadge(o)}</div>
         <div class="pfSDate mono">${P.fmt(o.created_at)}</div>
       </div>
       <div class="pfSVeh">${P.esc(o.vehicle_label || 'No vehicle given')}</div>
@@ -120,6 +181,11 @@
   function shell(bodyHTML) {
     app.innerHTML = appHeader('Staff console', 'Approvals · fitment · stock') + `<main class="page pfStaff">
       <section class="v3OrdersHero"><div><span class="sectionKicker">STAFF</span><h1>Order approvals</h1><p>Review fitment and stock, approve with the final price, then move each order to collection. Every change is logged server-side.</p></div></section>
+      <div class="pfStaffLive">
+        <span class="pfLiveDot" aria-hidden="true"></span>
+        <span>Checking for new orders every ${Math.round(POLL_MS / 1000)}s</span>
+        <button class="pfSoundBtn" data-staff-sound aria-pressed="${soundOn()}">${soundOn() ? '🔔 Sound on' : '🔕 Sound off'}</button>
+      </div>
       <div class="pfStaffTabs">${TABS.map(t => `<button class="chip ${curTab === t[0] ? 'on' : ''}" data-staff-tab="${t[0]}">${t[1]}</button>`).join('')}</div>
       <div id="pfStaffBody">${bodyHTML}</div>
       ${P.footer()}</main>${nav('account')}`;
@@ -133,6 +199,7 @@
     }
     if (state && state.error) return shell(info('⚠️', 'Couldn’t load the queue', P.esc(state.error), '<button class="btn outlineNavy" data-staff-tab="' + curTab + '">Try again</button>'));
     const list = state || [];
+    markSeen(list);
     shell(list.length ? list.map(card).join('') : info('✓', 'Nothing here', 'No orders in this queue right now.'));
   }
 
@@ -144,6 +211,20 @@
       : info('✓', 'No open requests', 'Part requests and contact messages land here.'));
   }
 
+  // Poll result: re-render in place, with no loading skeleton, so the queue
+  // updating under the owner is not mistaken for the page reloading.
+  function quietRefresh() {
+    const fetcher = curTab === 'requests'
+      ? window.PFSB.staffListRequests('all').then(a => ({ kind: 'req', rows: a }))
+      : window.PFSB.staffListOrders(curTab).then(a => ({ kind: 'ord', rows: a }));
+    return fetcher.then(r => {
+      if (!document.querySelector('.pfStaffLive')) return;   // navigated away mid-flight
+      if (r.kind === 'req') { renderRequests(r.rows); return; }
+      noticeArrivals(r.rows);
+      renderList(r.rows);
+    }).catch(() => { /* a failed poll is not worth interrupting anyone over */ });
+  }
+
   function load() {
     if (curTab === 'requests') {
       renderRequests('loading');
@@ -151,15 +232,18 @@
       return;
     }
     renderList('loading');
-    window.PFSB.staffListOrders(curTab).then(a => renderList(a)).catch(e => renderList({ error: e.message || 'Network error' }));
+    window.PFSB.staffListOrders(curTab).then(a => { noticeArrivals(a); renderList(a); })
+      .catch(e => renderList({ error: e.message || 'Network error' }));
   }
 
   function page() {
+    stopPolling(); knownRefs = null; freshRefs = new Set();
     if (!SB()) { shell(info('🔒', 'Sign in required', 'Sign in with your staff account to open the approvals console.', '<button class="btn red" data-page="login">Sign in</button>')); return; }
     shell(info('⏳', 'Checking access…', 'One moment.'));
     window.PFSB.isStaff().then(role => {
       if (!role) { shell(info('🔒', 'Staff only', 'This area is for PartFit staff. Ask an admin to grant your account a staff role.')); return; }
       load();
+      startPolling();
     }).catch(() => shell(info('⚠️', 'Access check failed', 'Please try again.', '<button class="btn outlineNavy" data-page="staff">Retry</button>')));
   }
   P.register('staff', page);
@@ -183,6 +267,15 @@
       window.PFSB.setOrderStatus(ref, 'approved', { confirmedTotal: price, note })
         .then(() => { say('Order ' + ref + ' approved'); load(); })
         .catch(err => { conf.disabled = false; conf.textContent = 'Confirm approval'; say(err.message || 'Could not approve'); });
+      return;
+    }
+
+    if (e.target.closest('[data-staff-sound]')) {
+      try { localStorage.setItem(SOUND_KEY, soundOn() ? 'off' : 'on'); } catch { /* private mode */ }
+      const b = e.target.closest('[data-staff-sound]');
+      b.setAttribute('aria-pressed', String(soundOn()));
+      b.textContent = soundOn() ? '🔔 Sound on' : '🔕 Sound off';
+      if (soundOn()) ping();
       return;
     }
 

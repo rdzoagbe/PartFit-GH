@@ -770,3 +770,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .lpHelp p{margin:0;color:#5b6472;font-size:14px;line-height:1.7}
 .pfReqKind{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;letter-spacing:.04em;
   text-transform:uppercase;color:#5b6472}
+
+/* ---- staff: live queue, new-order highlight, waiting badge ---- */
+.pfStaffLive{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:12.5px;color:#5b6472}
+.pfLiveDot{width:8px;height:8px;border-radius:50%;background:var(--g);flex:0 0 auto;
+  animation:pfPulse 2.4s ease-in-out infinite}
+@keyframes pfPulse{0%,100%{opacity:1}50%{opacity:.25}}
+.pfSoundBtn{margin-left:auto;background:none;border:1px solid rgba(11,31,59,.16);border-radius:999px;
+  padding:4px 10px;font:inherit;font-size:12px;color:var(--n);cursor:pointer}
+.pfSoundBtn:hover{background:rgba(11,31,59,.05)}
+.pfStaffCard.isFresh{border-color:rgba(18,146,75,.55);box-shadow:0 0 0 3px rgba(18,146,75,.12)}
+.pfSNew{display:inline-block;margin-left:7px;padding:2px 7px;border-radius:999px;background:var(--g);
+  color:#fff;font-size:10px;font-weight:800;letter-spacing:.05em}
+.pfStaffBadge{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;
+  background:rgba(255,255,255,.18);font-size:11px;font-weight:800;letter-spacing:.02em}
+.pfStaffBadge.isNew{background:var(--g);color:#fff}
+@media(prefers-reduced-motion:reduce){.pfLiveDot{animation:none}}

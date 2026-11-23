@@ -137,7 +137,7 @@
         </section>
       </div>
 
-      ${staffRole ? `<button class="btn dark full" data-page="staff" style="margin-top:2px">🛠 Staff console <span style="opacity:.7;font-weight:700;font-size:11px">· ${P.esc(staffRole)}</span></button>` : ''}
+      ${staffRole ? `<button class="btn dark full pfStaffEntry" data-page="staff" style="margin-top:2px">🛠 Staff console <span style="opacity:.7;font-weight:700;font-size:11px">· ${P.esc(staffRole)}</span></button>` : ''}
 
       <div class="pfQuick">
         <button data-page="catalogue"><span>▦</span>Browse parts</button>
@@ -157,7 +157,22 @@
         window.PFSB.listOrders().then(a => a.map(window.PFSB.normOrder)).catch(e => ({ error: e.message || 'Could not load orders' })),
         window.PFSB.listVehicles().then(a => a.map(v => ({ id: v.id, make: v.make, model: v.model, year: v.model_year, engine: v.engine }))).catch(() => []),
         window.PFSB.isStaff().catch(() => null)
-      ]).then(([orders, cars, staffRole]) => { if (document.querySelector('.pfDashHero')) renderDash(p, orders, cars, demoMode, staffRole); });
+      ]).then(([orders, cars, staffRole]) => {
+        if (document.querySelector('.pfDashHero')) renderDash(p, orders, cars, demoMode, staffRole);
+        // Staff only: count what has landed since the console was last open, so
+        // a closed console still shows there is work waiting.
+        if (staffRole && window.PFSB.staffListOrders) {
+          window.PFSB.staffListOrders('submitted').then(rows => {
+            const btn = document.querySelector('[data-page="staff"].pfStaffEntry');
+            if (!btn || !Array.isArray(rows)) return;
+            const waiting = rows.length;
+            const unseen = P.staffUnseenCount ? P.staffUnseenCount(rows) : 0;
+            if (!waiting) return;
+            btn.insertAdjacentHTML('beforeend',
+              `<span class="pfStaffBadge${unseen ? ' isNew' : ''}">${waiting} waiting${unseen ? ' · ' + unseen + ' new' : ''}</span>`);
+          }).catch(() => { /* the console itself will report a real problem */ });
+        }
+      });
       return;
     }
     renderDash(p, P.userOrders(), P.cars(), demoMode);
